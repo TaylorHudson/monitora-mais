@@ -9,6 +9,8 @@ import { Card } from "../../components/ui/card";
 import { Pencil, Trash, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { Checkbox } from "../../components/ui/checkbox";
 import { fetchComToken } from "../../utils/fetchComToken";
+import { MonitoresTable } from "../professor/components/MonitoresTable";
+import { AdicionarMonitorModal } from "../professor/components/AdicionarMonitorModal";
 
 type Disciplina = {
   id: number;
@@ -27,12 +29,38 @@ export default function DisciplinasPage() {
   const [topicoInput, setTopicoInput] = useState("");
   const [filtro, setFiltro] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [showAddMonitor, setShowAddMonitor] = useState<number | null>(null);
-  const [novoMonitor, setNovoMonitor] = useState<{ nome: string; matricula: string }>({ nome: "", matricula: "" });
+  const [novoMonitor, setNovoMonitor] = useState({ nome: "", matricula: "" });
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState<null | number>(null);
   const [editDisciplina, setEditDisciplina] = useState<{ nome: string; permiteMesmoHorario: boolean; topicos: string[] }>({ nome: "", permiteMesmoHorario: false, topicos: [] });
   const [editTopicoInput, setEditTopicoInput] = useState("");
+
+  const [monitores, setMonitores] = useState([
+    {
+      monitor: "John Doe",
+      registration: "1245653245",
+      days: ["Seg.", "Ter.", "Qui.", "Sex."]
+    }
+  ]);
+  const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null);
+  const mockSchedules = [
+  {
+    monitor: "John Doe",
+    registration: "1245653245",
+    days: ["MONDAY", "TUESDAY", "THURSDAY", "FRIDAY"],
+  },
+  {
+    monitor: "Maria Silva",
+    registration: "987654321",
+    days: ["MONDAY", "WEDNESDAY"],
+  },
+  {
+    monitor: "Carlos Pereira",
+    registration: "456789123",
+    days: ["TUESDAY", "THURSDAY"],
+  },
+];
+
 
   useEffect(() => {
     setLoading(true);
@@ -115,40 +143,59 @@ export default function DisciplinasPage() {
       .finally(() => setLoading(false));
   }
 
-  function handleAddMonitor(discId: number) {
-    if (!novoMonitor.nome.trim() || !novoMonitor.matricula.trim()) return;
+  type NovoMonitor = {
+    nome: string;
+    matricula: string;
+  };
+
+  function handleAddMonitor(discId: number, monitor: NovoMonitor) {
+    if (!monitor.nome.trim() || !monitor.matricula.trim()) return;
+
     setLoading(true);
+
     const disciplina = disciplinas.find(d => d.id === discId);
-    if (!disciplina) return;
+    if (!disciplina) {
+      setLoading(false);
+      return;
+    }
+
     fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/students/subscribe`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        studentRegistration: novoMonitor.matricula,
+        studentRegistration: monitor.matricula,
         monitoringName: disciplina.nome,
       }),
     })
       .then(async res => {
         if (res.status === 201) {
-          setNovoMonitor({ nome: "", matricula: "" });
-          setShowAddMonitor(null);
-          showToast('Monitor adicionado com sucesso!', 'success');
+          setMonitores(prev => [
+            ...prev,
+            {
+              monitor: monitor.nome,
+              registration: monitor.matricula,
+              days: []
+            },
+          ]);
+
+          showToast("Monitor adicionado com sucesso!", "success");
           return;
         }
+
         if (!res.ok) {
           const msg = await res.text();
-          showToast(msg || 'Erro ao adicionar monitor', 'error');
-          throw new Error(msg || 'Erro ao adicionar monitor');
+          throw new Error(msg || "Erro ao adicionar monitor");
         }
-        return res.json();
       })
-      .catch((err) => {
-        if (err.message && !err.message.toLowerCase().includes('sucesso')) {
-          showToast('Erro ao adicionar monitor: ' + (err.message || 'Erro desconhecido'), 'error');
-        }
+      .catch(err => {
+        showToast(
+          "Erro ao adicionar monitor: " + (err.message || "Erro desconhecido"),
+          "error"
+        );
       })
       .finally(() => setLoading(false));
   }
+
 
   function handleDeleteDisciplina(id: number) {
     setLoading(true);
@@ -265,7 +312,6 @@ export default function DisciplinasPage() {
                       aria-label={expanded === disc.id ? "Recolher detalhes" : "Expandir detalhes"}
                       onClick={() => {
                         setExpanded(expanded === disc.id ? null : disc.id);
-                        setShowAddMonitor(null);
                       }}
                       className="rounded-full border-2 border-primary bg-white shadow p-2 hover:bg-primary/10 transition-all"
                     >
@@ -277,34 +323,27 @@ export default function DisciplinasPage() {
                     </Button>
                   </div>
                   {expanded === disc.id && (
-                    <div className="w-full mt-6 border-t pt-4 flex flex-col gap-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-fit border-primary text-primary font-semibold hover:bg-primary/10"
-                        onClick={() => setShowAddMonitor(showAddMonitor === disc.id ? null : disc.id)}
-                      >Adicionar Monitor</Button>
-                      {showAddMonitor === disc.id && (
-                        <div className="flex flex-col md:flex-row gap-4 items-center">
-                          <Input
-                            placeholder="Nome do monitor"
-                            value={novoMonitor.nome}
-                            onChange={e => setNovoMonitor({ ...novoMonitor, nome: e.target.value })}
-                            className="max-w-xs bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary rounded-xl h-12 text-base"
-                          />
-                          <Input
-                            placeholder="Matrícula"
-                            value={novoMonitor.matricula}
-                            onChange={e => setNovoMonitor({ ...novoMonitor, matricula: e.target.value })}
-                            className="max-w-xs bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary rounded-xl h-12 text-base"
-                          />
-                          <Button
-                            type="button"
-                            onClick={() => handleAddMonitor(disc.id)}
-                            className="h-12 text-lg bg-primary text-white hover:bg-green-700 rounded-xl px-6"
-                          >Confirmar</Button>
-                        </div>
-                      )}
+                      <div className="w-full mt-6 border-t pt-4 flex flex-col gap-4">
+                        
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-fit border-primary text-primary font-semibold hover:bg-primary/10"
+                          onClick={() => {
+                            setDisciplinaSelecionada(disc.id);
+                            setNovoMonitor({ nome: "", matricula: "" });
+                          }}
+                        >
+                          Adicionar Monitor
+                        </Button>
+
+                        <AdicionarMonitorModal
+                          open={disciplinaSelecionada !== null}
+                          onClose={() => setDisciplinaSelecionada(null)}
+                          onConfirm={(data) => handleAddMonitor(disc.id, data)}
+                        />
+                      
+                      <MonitoresTable monitors={mockSchedules || []} />
                     </div>
                   )}
                 </Card>
