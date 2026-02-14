@@ -277,9 +277,23 @@ export default function DisciplinasPage() {
                 />
               </div>
               <div className="flex justify-end w-full md:w-auto">
-                <Button variant="ghost" size="icon" onClick={() => setModalAberto(true)} aria-label="Adicionar disciplina" className="bg-primary text-white hover:bg-green-700">
-                  <Plus className="w-7 h-7" />
+                <Button
+                  variant="ghost"
+                  onClick={() => setModalAberto(true)}
+                  aria-label="Nova disciplina"
+                  className="
+                    bg-primary 
+                    text-white 
+                    hover:bg-green-700
+                    flex items-center gap-2
+                    px-4
+                    h-10
+                  "
+                >
+                  <Plus className="w-5 h-5" />
+                  Nova disciplina
                 </Button>
+
               </div>
             </div>
           </div>

@@ -33,6 +33,13 @@ const items = [
   },
 ];
 
+function handleLogout() {
+  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  window.location.href = "/login";
+}
+
+
 export function AppSidebarProfessor() {
   const location = useLocation();
   const { state } = useSidebar(); // "expanded" ou "collapsed"
@@ -96,21 +103,30 @@ export function AppSidebarProfessor() {
               })}
             </SidebarMenu>
             {/* Botão de logoff logo após os itens do menu */}
-            <SidebarMenuItem className="mb-6 mt-160">
-              <SidebarMenuButton
-                asChild
-                className="flex items-center gap-4 px-6 py-4 rounded-xl text-lg font-semibold transition-all duration-200 hover:bg-red-100 hover:text-red-700 hover:shadow"
-              >
-                <button type="button" onClick={() => {
-                  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                  window.location.href = "/login";
-                }} className="flex items-center gap-4 w-full text-left">
-                  <LogOut className="w-8 h-8" />
-                  <span className={state === "collapsed" ? "inline md:hidden" : ""}>Sair</span>
-                </button>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <SidebarMenuItem className="mt-auto mb-6">
+  <SidebarMenuButton
+    asChild
+    className="
+      flex items-center gap-4 px-6 py-4
+      rounded-xl text-lg font-semibold
+      transition-all duration-200
+      hover:bg-red-100 hover:text-red-700 hover:shadow
+    "
+  >
+    <button
+      type="button"
+      onClick={handleLogout}
+      className="flex items-center gap-4 w-full text-left"
+      aria-label="Sair do sistema"
+    >
+      <LogOut className="w-8 h-8" />
+      <span className={state === "collapsed" ? "inline md:hidden" : ""}>
+        Sair
+      </span>
+    </button>
+  </SidebarMenuButton>
+</SidebarMenuItem>
+
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

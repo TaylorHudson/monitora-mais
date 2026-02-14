@@ -1,6 +1,7 @@
 import { Button } from "../../../components/ui/button";
 import { MonitoresTable } from "../components/MonitoresTable";
 import { AdicionarMonitorModal } from "../components/AdicionarMonitorModal";
+import { Plus } from "lucide-react";
 
 type Props = {
   disciplinaId: number;
@@ -21,14 +22,24 @@ export function DisciplinaExpand({
 }: Props) {
   return (
     <div className="w-full mt-6 border-t pt-4 flex flex-col gap-4">
-      <Button
-        type="button"
-        variant="outline"
-        className="w-fit border-primary text-primary font-semibold hover:bg-primary/10"
-        onClick={onOpenModal}
-      >
-        Adicionar Monitor
-      </Button>
+      <div className="flex justify-end">
+        <Button
+            onClick={onOpenModal}
+            className="
+            bg-primary 
+            text-white 
+            hover:bg-green-700
+            shadow-md
+            flex items-center gap-2
+            h-10
+            px-4
+            rounded-md
+            "
+        >
+            <Plus className="w-4 h-4" />
+            Adicionar monitor
+        </Button>
+      </div>
 
       <AdicionarMonitorModal
         open={openModal}
