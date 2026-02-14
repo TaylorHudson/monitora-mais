@@ -11,6 +11,8 @@ import { Checkbox } from "../../components/ui/checkbox";
 import { fetchComToken } from "../../utils/fetchComToken";
 import { MonitoresTable } from "../professor/components/MonitoresTable";
 import { AdicionarMonitorModal } from "../professor/components/AdicionarMonitorModal";
+import { DisciplinaCard } from "./components/DisciplinaCard";
+import { DisciplinaExpand } from "./components/DisciplinaExpand";
 
 type Disciplina = {
   id: number;
@@ -298,55 +300,26 @@ export default function DisciplinasPage() {
                 d.nome.toLowerCase().includes(filtro.toLowerCase())
               )
               .map((disc) => (
-                <Card key={disc.id} className="bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white w-full rounded-2xl shadow-lg p-7 flex flex-col border border-[#b2c9d6] transition-all hover:scale-[1.01]">
-                  <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-8 flex-1">
-                    <div>
-                      <div className="font-bold text-2xl text-primary drop-shadow-sm mb-1">{disc.nome}</div>
-                    </div>
-                  </div>
-                  {/* Botão de expandir centralizado na parte inferior, usando ChevronDown/ChevronUp */}
-                  <div className="flex justify-center mt-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={expanded === disc.id ? "Recolher detalhes" : "Expandir detalhes"}
-                      onClick={() => {
-                        setExpanded(expanded === disc.id ? null : disc.id);
-                      }}
-                      className="rounded-full border-2 border-primary bg-white shadow p-2 hover:bg-primary/10 transition-all"
-                    >
-                      {expanded === disc.id ? (
-                        <ChevronUp className="w-7 h-7 text-primary" />
-                      ) : (
-                        <ChevronDown className="w-7 h-7 text-primary" />
-                      )}
-                    </Button>
-                  </div>
+                <DisciplinaCard
+                  key={disc.id}
+                  disciplina={disc}
+                  expanded={expanded === disc.id}
+                  onToggleExpand={() =>
+                    setExpanded(expanded === disc.id ? null : disc.id)
+                  }
+                >
                   {expanded === disc.id && (
-                      <div className="w-full mt-6 border-t pt-4 flex flex-col gap-4">
-                        
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-fit border-primary text-primary font-semibold hover:bg-primary/10"
-                          onClick={() => {
-                            setDisciplinaSelecionada(disc.id);
-                            setNovoMonitor({ nome: "", matricula: "" });
-                          }}
-                        >
-                          Adicionar Monitor
-                        </Button>
-
-                        <AdicionarMonitorModal
-                          open={disciplinaSelecionada !== null}
-                          onClose={() => setDisciplinaSelecionada(null)}
-                          onConfirm={(data) => handleAddMonitor(disc.id, data)}
-                        />
-                      
-                      <MonitoresTable monitors={mockSchedules || []} />
-                    </div>
+                    <DisciplinaExpand
+                      disciplinaId={disc.id}
+                      openModal={disciplinaSelecionada === disc.id}
+                      onOpenModal={() => setDisciplinaSelecionada(disc.id)}
+                      onCloseModal={() => setDisciplinaSelecionada(null)}
+                      onAddMonitor={handleAddMonitor}
+                      monitors={mockSchedules || []}
+                    />
                   )}
-                </Card>
+                </DisciplinaCard>
+
               ))}
           </div>
 
