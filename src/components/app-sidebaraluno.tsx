@@ -103,8 +103,8 @@ export function AppSidebarAluno() {
                   </SidebarMenuItem>
                 )
               })}
-              {/* Logoff item */}
-              <SidebarMenuItem className="mb-6 mt-8">
+              
+              <SidebarMenuItem className="">
                 <SidebarMenuButton
                   asChild
                   className="flex items-center gap-4 px-6 py-4 rounded-xl text-lg font-semibold transition-all duration-200 hover:bg-red-100 hover:text-red-700 hover:shadow"

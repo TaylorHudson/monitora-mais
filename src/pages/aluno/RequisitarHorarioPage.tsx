@@ -57,11 +57,6 @@ export default function RequisitarHorarioPage() {
             <p className="text-gray-500 mt-2 ml-12">
               Solicite um horário de monitoria ao professor.
             </p>
-            {cargaHorariaFaltante && (
-              <div className="ml-12 mt-2 text-base text-primary font-semibold bg-primary/10 rounded-lg px-4 py-2 inline-block">
-                Carga horária semanal faltante: <span className="font-bold">{cargaHorariaFaltante}</span>
-              </div>
-            )}
             <div className="h-1 w-24 bg-primary/20 rounded mt-4 ml-12" />
           </div>
           <div className="flex flex-col w-full px-4 py-8 gap-4">

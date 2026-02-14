@@ -96,6 +96,53 @@ export default function IniciarMonitoriaPage() {
       .finally(() => setLoading(false));
   }
 
+  function handleFinish() {
+    if (!monitoriaSelecionada) return;
+
+    setLoading(true);
+    setErro(null);
+
+    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/sessions/students/finish`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        monitoringScheduleId: Number(monitoriaSelecionada),
+        topics: topicosSelecionados,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          // Finalizou com sucesso
+          setMonitoriaAtiva(false);
+          setInicio(null);
+          setMonitoriaSelecionada("");
+          setMonitoriaNome("");
+          setTopicosSelecionados([]);
+          setTopicosDaMonitoria([]);
+        } else {
+          let msg = "Erro ao finalizar monitoria. Tente novamente.";
+          try {
+            const data = await res.json();
+            if (data?.message) msg = data.message;
+            else if (typeof data === "string") msg = data;
+          } catch {
+            try {
+              const text = await res.text();
+              if (text) msg = text;
+            } catch {}
+          }
+          setErro(msg);
+        }
+      })
+      .catch(() => {
+        setErro("Erro de conexão ao finalizar monitoria. Tente novamente.");
+      })
+      .finally(() => setLoading(false));
+  }
+
+
   // Busca a monitoria selecionada garantindo comparação correta de tipos
   const monitoria = monitorias.find((m) => String(m.id) === String(monitoriaSelecionada));
 
@@ -250,12 +297,9 @@ export default function IniciarMonitoriaPage() {
                 </div>
               </div>
             )}
-            {monitoriaAtiva && (
-              // Removido textarea de descrição livre
-              null
-            )}
+            
             <div className="flex w-full">
-              {!monitoriaAtiva && (
+              {!monitoriaAtiva ? (
                 <Button
                   size="lg"
                   className="w-72 flex items-center gap-2 justify-center bg-green-600 hover:bg-green-700 text-white"
@@ -265,9 +309,19 @@ export default function IniciarMonitoriaPage() {
                 >
                   <PlayCircle className="w-5 h-5" /> Iniciar Monitoria
                 </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="w-72 flex items-center gap-2 justify-center bg-red-600 hover:bg-red-700 text-white"
+                  variant="default"
+                  onClick={handleFinish}
+                  disabled={loading}
+                >
+                  Finalizar Monitoria
+                </Button>
               )}
-              {/* Quando monitoria está ativa, não exibe botão de finalizar */}
             </div>
+
           </div>
         </main>
       </SidebarProvider>
