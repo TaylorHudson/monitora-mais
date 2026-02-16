@@ -8,8 +8,8 @@ type Props = {
   openModal: boolean;
   onOpenModal: () => void;
   onCloseModal: () => void;
-  onAddMonitor: (discId: number, data: { nome: string; matricula: string }) => void;
-  monitors: any[];
+  onAddMonitor: (discId: number, data: { matricula: string }) => void;
+  reloadMonitoresKey: number;
 };
 
 export function DisciplinaExpand({
@@ -18,7 +18,7 @@ export function DisciplinaExpand({
   onOpenModal,
   onCloseModal,
   onAddMonitor,
-  monitors,
+  reloadMonitoresKey
 }: Props) {
   return (
     <div className="w-full mt-6 border-t pt-4 flex flex-col gap-4">
@@ -47,7 +47,7 @@ export function DisciplinaExpand({
         onConfirm={(data) => onAddMonitor(disciplinaId, data)}
       />
 
-      <MonitoresTable monitors={monitors} />
+      <MonitoresTable disciplinaId={disciplinaId} reloadMonitoresKey={reloadMonitoresKey}/>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { AppSidebarProfessor } from "../../components/ui/app-sidebarprofessor";
 import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { Card } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { fetchComToken } from "../../utils/fetchComToken";
+import { fetchComToken } from "../../services/authFetch";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LabelList } from "recharts";
 
 // Tipagem do modelo retornado
@@ -32,23 +32,21 @@ export default function EstatisticasDisciplinasPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
+  async function buscarDisciplinas() {
+    try {
+      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/me`)
+      const data = await res.json();
+      setDisciplinas(Array.isArray(data) ? data : []);
+    } catch (err: Error | any) {
+      setErro(err.message || "Erro ao buscar estatísticas");
+      setDisciplinas([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/me`)
-      .then(async res => {
-        if (!res.ok) {
-          const msg = await res.text();
-          setErro(msg || "Erro ao buscar estatísticas");
-          setDisciplinas([]);
-          return;
-        }
-        const data = await res.json();
-        setDisciplinas(Array.isArray(data) ? data : []);
-      })
-      .catch(err => {
-        setErro(err.message || "Erro ao buscar estatísticas");
-        setDisciplinas([]);
-      })
-      .finally(() => setLoading(false));
+    buscarDisciplinas();
   }, []);
 
   return (
@@ -65,7 +63,6 @@ export default function EstatisticasDisciplinasPage() {
           ) : (
             <div className="flex flex-col gap-8">
               {disciplinas.map((disc) => {
-                // Prepara dados para o gráfico
                 const chartData = disc.topics.map((topico) => ({
                   name: topico,
                   monitorias: disc.countTopicsInSession[topico] ?? 0,

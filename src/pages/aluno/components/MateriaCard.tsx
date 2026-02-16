@@ -7,7 +7,7 @@ import {
 } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { useState } from "react";
-import { fetchComToken } from "../../../utils/fetchComToken";
+import { fetchComToken } from "../../../services/authFetch";
 import { SolicitarHorarioModal } from "./SolicitarHorarioModal";
 
 interface Props {
@@ -48,64 +48,59 @@ export function MateriaCard({ id, nome, professor, alreadyRequested, expandido, 
   diaSelecionado: string,
   horaInicio: string,
   horaFim: string
-) {
-  setErroHora(null);
+  ) {
+    setErroHora(null);
 
-  if (!diaSelecionado || !horaInicio || !horaFim) {
-    setErroHora("Preencha todos os campos antes de enviar.");
-    return;
-  }
-
-  if (!/^\d{2}:\d{2}$/.test(horaInicio) || !/^\d{2}:\d{2}$/.test(horaFim)) {
-    setErroHora("Horário inválido. Use o formato HH:mm.");
-    return;
-  }
-
-  if (horaFim <= horaInicio) {
-    setErroHora("A hora final deve ser posterior à hora inicial.");
-    return;
-  }
-
-  const [h1, m1] = horaInicio.split(":").map(Number);
-  const [h2, m2] = horaFim.split(":").map(Number);
-  if (h2 * 60 + m2 - (h1 * 60 + m1) < 30) {
-    setErroHora("O intervalo entre o início e o fim deve ser de pelo menos 30 minutos.");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const payload = {
-      monitoring: nome,
-      dayOfWeek: traduzirDiaParaApi(diaSelecionado),
-      startTime: horaInicio + ":00",
-      endTime: horaFim + ":00",
-    };
-
-    const res = await fetchComToken(
-      `${import.meta.env.VITE_API_URL}/monitoring/schedules/students`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    if (!res.ok) {
-      const msg = await res.text();
-      throw new Error(msg || "Erro ao enviar solicitação");
+    if (!diaSelecionado || !horaInicio || !horaFim) {
+      setErroHora("Preencha todos os campos antes de enviar.");
+      return;
     }
 
-    onExpandir();
-    window.location.reload(); // temporário
+    if (!/^\d{2}:\d{2}$/.test(horaInicio) || !/^\d{2}:\d{2}$/.test(horaFim)) {
+      setErroHora("Horário inválido. Use o formato HH:mm.");
+      return;
+    }
 
-  } catch (err: any) {
-    setErroHora(err.message || "Erro inesperado.");
-  } finally {
-    setLoading(false);
+    if (horaFim <= horaInicio) {
+      setErroHora("A hora final deve ser posterior à hora inicial.");
+      return;
+    }
+
+    const [h1, m1] = horaInicio.split(":").map(Number);
+    const [h2, m2] = horaFim.split(":").map(Number);
+    if (h2 * 60 + m2 - (h1 * 60 + m1) < 30) {
+      setErroHora("O intervalo entre o início e o fim deve ser de pelo menos 30 minutos.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        monitoring: nome,
+        dayOfWeek: traduzirDiaParaApi(diaSelecionado),
+        startTime: horaInicio + ":00",
+        endTime: horaFim + ":00",
+      };
+
+      await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/schedules/students`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      onExpandir();
+      window.location.reload();
+
+    } catch (err: any) {
+      setErroHora(err.message || "Erro inesperado.");
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
 
   return (
@@ -115,9 +110,6 @@ export function MateriaCard({ id, nome, professor, alreadyRequested, expandido, 
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold text-primary drop-shadow-sm">{nome}</CardTitle>
         <CardDescription className="text-gray-700">Professor: {professor}</CardDescription>
-        <span className={`text-sm font-semibold ${alreadyRequested ? "text-green-600" : "text-gray-500"}`}>
-          {alreadyRequested ? "Já foi solicitado" : "Não foi solicitado"}
-        </span>
       </CardHeader>
       <CardFooter className="flex flex-col items-start gap-2 pt-0 pb-4 px-6">
         <Button

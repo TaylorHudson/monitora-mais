@@ -5,14 +5,12 @@ import { Button } from "../../components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
-import { Card } from "../../components/ui/card";
-import { Pencil, Trash, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Checkbox } from "../../components/ui/checkbox";
-import { fetchComToken } from "../../utils/fetchComToken";
-import { MonitoresTable } from "../professor/components/MonitoresTable";
-import { AdicionarMonitorModal } from "../professor/components/AdicionarMonitorModal";
+import { fetchComToken } from "../../services/authFetch";
 import { DisciplinaCard } from "./components/DisciplinaCard";
 import { DisciplinaExpand } from "./components/DisciplinaExpand";
+import { Spinner } from "../../components/ui/Spinner";
 
 type Disciplina = {
   id: number;
@@ -31,173 +29,126 @@ export default function DisciplinasPage() {
   const [topicoInput, setTopicoInput] = useState("");
   const [filtro, setFiltro] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [novoMonitor, setNovoMonitor] = useState({ nome: "", matricula: "" });
   const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState<null | number>(null);
   const [editDisciplina, setEditDisciplina] = useState<{ nome: string; permiteMesmoHorario: boolean; topicos: string[] }>({ nome: "", permiteMesmoHorario: false, topicos: [] });
   const [editTopicoInput, setEditTopicoInput] = useState("");
+  const [reloadMonitoresKey, setReloadMonitoresKey] = useState(0);
 
-  const [monitores, setMonitores] = useState([
-    {
-      monitor: "John Doe",
-      registration: "1245653245",
-      days: ["Seg.", "Ter.", "Qui.", "Sex."]
-    }
-  ]);
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null);
-  const mockSchedules = [
-  {
-    monitor: "John Doe",
-    registration: "1245653245",
-    days: ["MONDAY", "TUESDAY", "THURSDAY", "FRIDAY"],
-  },
-  {
-    monitor: "Maria Silva",
-    registration: "987654321",
-    days: ["MONDAY", "WEDNESDAY"],
-  },
-  {
-    monitor: "Carlos Pereira",
-    registration: "456789123",
-    days: ["TUESDAY", "THURSDAY"],
-  },
-];
 
+  async function carregarMonitorias() {
+    try {
+      setLoading(true);
+      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/me`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setDisciplinas(data.map((d: any) => ({
+          id: d.id,
+          nome: d.name,
+          professor: d.teacher,
+          permiteMesmoHorario: d.allowMonitorsSameTime,
+          topicos: d.topics || [],
+          monitores: d.schedules ? d.schedules.length : 0,
+          schedules: d.schedules || [],
+        })));
+      } else {
+        setDisciplinas([]);
+      } 
+    }
+    catch {
+      setDisciplinas([]);
+    }
+    finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    setLoading(true);
-    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/me`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setDisciplinas(data.map((d: any) => ({
-            id: d.id,
-            nome: d.name,
-            professor: d.teacher,
-            permiteMesmoHorario: d.allowMonitorsSameTime,
-            topicos: d.topics || [],
-            monitores: d.schedules ? d.schedules.length : 0,
-            schedules: d.schedules || [],
-          })));
-        } else {
-          setDisciplinas([]);
-        }
-      })
-      .catch(() => setDisciplinas([]))
-      .finally(() => setLoading(false));
+    carregarMonitorias();
   }, []);
 
-  // Função para mostrar feedback ao usuário
   function showToast(message: string, type: 'success' | 'error' = 'success') {
     if (type === 'success') {
-      window.alert(message); // Substitua por um toast se houver um componente de toast
+      window.alert(message);
     } else {
       window.alert(message);
     }
   }
 
-  function handleCriarDisciplina(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: novaDisciplina.nome,
-        allowMonitorsSameTime: novaDisciplina.permiteMesmoHorario,
-        topics: novaDisciplina.topicos,
-      }),
-    })
-      .then(async res => {
-        if (!res.ok) {
-          const msg = await res.text();
-          showToast(msg || 'Erro ao criar disciplina', 'error');
-          throw new Error(msg || 'Erro ao criar disciplina');
-        }
-        return res.json();
+  async function handleCriarDisciplina() {
+    try {
+      setLoading(true);
+      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: novaDisciplina.nome,
+          allowMonitorsSameTime: novaDisciplina.permiteMesmoHorario,
+          topics: novaDisciplina.topicos,
+        }),
       })
-      .then((data) => {
-        setDisciplinas(prev => [
-          ...prev,
-          {
-            id: data.id,
-            nome: data.name,
-            monitores: data.monitors?.length || 0,
-            professor: data.teacher,
-            topicos: data.topics || [],
-            permiteMesmoHorario: data.allowMonitorsSameTime || false,
-          },
-        ]);
-        setNovaDisciplina({ nome: "", permiteMesmoHorario: false, topicos: [] });
-        setTopicoInput("");
-        setModalAberto(false);
-        showToast('Disciplina criada com sucesso!', 'success');
-      })
-      .catch((err) => {
-        // Erro já exibido acima, mas pode logar para debug
-        if (err.message && (err.message.includes('duplicate key value') || err.message.includes('violates unique constraint'))) {
-          showToast('Já existe uma disciplina/monitoria com esse nome ou identificador. Tente outro nome.', 'error');
-        } else {
-          showToast('Erro ao criar monitoria: ' + (err.message || 'Erro desconhecido'), 'error');
-        }
-        console.error('Erro ao criar monitoria:', err);
-      })
-      .finally(() => setLoading(false));
+
+      const data = await res.json()
+          setDisciplinas(prev => [
+            ...prev,
+            {
+              id: data.id,
+              nome: data.name,
+              monitores: data.monitors?.length || 0,
+              professor: data.teacher,
+              topicos: data.topics || [],
+              permiteMesmoHorario: data.allowMonitorsSameTime || false,
+            },
+      ]);
+      setNovaDisciplina({ nome: "", permiteMesmoHorario: false, topicos: [] });
+      setTopicoInput("");
+      setModalAberto(false);
+      showToast('Disciplina criada com sucesso!', 'success');
+    } catch(err: Error | any) {
+      if (err.message && (err.message.includes('duplicate key value') || err.message.includes('violates unique constraint'))) {
+        showToast('Já existe uma disciplina/monitoria com esse nome ou identificador. Tente outro nome.', 'error');
+      } else {
+        showToast('Erro ao criar monitoria: ' + (err.message || 'Erro desconhecido'), 'error');
+      }
+      console.error('Erro ao criar monitoria:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   type NovoMonitor = {
-    nome: string;
     matricula: string;
   };
 
-  function handleAddMonitor(discId: number, monitor: NovoMonitor) {
-    if (!monitor.nome.trim() || !monitor.matricula.trim()) return;
+  async function handleAddMonitor(discId: number, monitor: NovoMonitor) {
+    try {
+      if (!monitor.matricula.trim()) return;
 
-    setLoading(true);
+      setLoading(true);
 
-    const disciplina = disciplinas.find(d => d.id === discId);
-    if (!disciplina) {
+      const disciplina = disciplinas.find(d => d.id === discId);
+      if (!disciplina) {
+        setLoading(false);
+        return;
+      }
+
+      await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/students/subscribe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          studentRegistration: monitor.matricula,
+          monitoringName: disciplina.nome,
+        }),
+      })
+
+      setReloadMonitoresKey((prev) => prev + 1);
+    } catch (err: Error | any) {
+      showToast(err.message || 'Erro ao adicionar monitor', 'error');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/students/subscribe`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        studentRegistration: monitor.matricula,
-        monitoringName: disciplina.nome,
-      }),
-    })
-      .then(async res => {
-        if (res.status === 201) {
-          setMonitores(prev => [
-            ...prev,
-            {
-              monitor: monitor.nome,
-              registration: monitor.matricula,
-              days: []
-            },
-          ]);
-
-          showToast("Monitor adicionado com sucesso!", "success");
-          return;
-        }
-
-        if (!res.ok) {
-          const msg = await res.text();
-          throw new Error(msg || "Erro ao adicionar monitor");
-        }
-      })
-      .catch(err => {
-        showToast(
-          "Erro ao adicionar monitor: " + (err.message || "Erro desconhecido"),
-          "error"
-        );
-      })
-      .finally(() => setLoading(false));
   }
-
 
   function handleDeleteDisciplina(id: number) {
     setLoading(true);
@@ -259,223 +210,224 @@ export default function DisciplinasPage() {
   }
 
   return (
-    <div className="flex h-full w-full bg-[#F1F7FA]">
-      <SidebarProvider>
-        <SidebarTrigger className="md:hidden fixed top-4 left-4 z-50" />
-        <AppSidebarProfessor />
-        <main className="flex-1 p-4 md:p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white min-h-screen">
-          <div className="mb-8 text-left w-full">
-            <h1 className="text-3xl font-semibold mb-1 text-primary drop-shadow-sm">Disciplinas</h1>
-            <p className="text-gray-700 text-base text-left">Gerencie as suas disciplinas cadastradas.</p>
-            <div className="flex flex-col md:flex-row md:items-center gap-4 mt-6 w-full">
-              <div className="flex-1">
-                <Input
-                  placeholder="Buscar disciplina..."
-                  value={filtro}
-                  onChange={e => setFiltro(e.target.value)}
-                  className="w-full max-w-md bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
-                />
-              </div>
-              <div className="flex justify-end w-full md:w-auto">
-                <Button
-                  variant="ghost"
-                  onClick={() => setModalAberto(true)}
-                  aria-label="Nova disciplina"
-                  className="
-                    bg-primary 
-                    text-white 
-                    hover:bg-green-700
-                    flex items-center gap-2
-                    px-4
-                    h-10
-                  "
-                >
-                  <Plus className="w-5 h-5" />
-                  Nova disciplina
-                </Button>
+    <>
+        {loading && <Spinner />}
+        <div className="flex h-full w-full bg-[#F1F7FA]">
+        <SidebarProvider>
+          <SidebarTrigger className="md:hidden fixed top-4 left-4 z-50" />
+          <AppSidebarProfessor />
+          <main className="flex-1 p-4 md:p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white min-h-screen">
+            <div className="mb-8 text-left w-full">
+              <h1 className="text-3xl font-semibold mb-1 text-primary drop-shadow-sm">Disciplinas</h1>
+              <p className="text-gray-700 text-base text-left">Gerencie as suas disciplinas cadastradas.</p>
+              <div className="flex flex-col md:flex-row md:items-center gap-4 mt-6 w-full">
+                <div className="flex-1">
+                  <Input
+                    placeholder="Buscar disciplina..."
+                    value={filtro}
+                    onChange={e => setFiltro(e.target.value)}
+                    className="w-full max-w-md bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
+                  />
+                </div>
+                <div className="flex justify-end w-full md:w-auto">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setModalAberto(true)}
+                    aria-label="Nova disciplina"
+                    className="
+                      bg-primary 
+                      text-white 
+                      hover:bg-green-700
+                      flex items-center gap-2
+                      px-4
+                      h-10
+                    "
+                  >
+                    <Plus className="w-5 h-5" />
+                    Nova disciplina
+                  </Button>
 
+                </div>
               </div>
             </div>
-          </div>
-          <div className="flex flex-col gap-6 w-full">
-            {loading ? (
-              <div className="text-center text-gray-400 py-8">Carregando...</div>
-            ) : disciplinas
-              .filter(d =>
-                !filtro ||
-                d.nome.toLowerCase().includes(filtro.toLowerCase())
-              )
-              .length === 0 && (
-              <div className="text-center text-gray-400 py-8">Nenhuma disciplina encontrada.</div>
-            )}
-            {disciplinas
-              .filter(d =>
-                !filtro ||
-                d.nome.toLowerCase().includes(filtro.toLowerCase())
-              )
-              .map((disc) => (
-                <DisciplinaCard
-                  key={disc.id}
-                  disciplina={disc}
-                  expanded={expanded === disc.id}
-                  onToggleExpand={() =>
-                    setExpanded(expanded === disc.id ? null : disc.id)
-                  }
-                >
-                  {expanded === disc.id && (
-                    <DisciplinaExpand
-                      disciplinaId={disc.id}
-                      openModal={disciplinaSelecionada === disc.id}
-                      onOpenModal={() => setDisciplinaSelecionada(disc.id)}
-                      onCloseModal={() => setDisciplinaSelecionada(null)}
-                      onAddMonitor={handleAddMonitor}
-                      monitors={mockSchedules || []}
-                    />
-                  )}
-                </DisciplinaCard>
+            <div className="flex flex-col gap-6 w-full">
+              {disciplinas
+                .filter(d =>
+                  !filtro ||
+                  d.nome.toLowerCase().includes(filtro.toLowerCase())
+                )
+                .length === 0 && (
+                <div className="text-center text-gray-400 py-8">Nenhuma disciplina encontrada.</div>
+              )}
+              {disciplinas
+                .filter(d =>
+                  !filtro ||
+                  d.nome.toLowerCase().includes(filtro.toLowerCase())
+                )
+                .map((disc) => (
+                  <DisciplinaCard
+                    key={disc.id}
+                    disciplina={disc}
+                    expanded={expanded === disc.id}
+                    onToggleExpand={() =>
+                      setExpanded(expanded === disc.id ? null : disc.id)
+                    }
+                  >
+                    {expanded === disc.id && (
+                      <DisciplinaExpand
+                        disciplinaId={disc.id}
+                        openModal={disciplinaSelecionada === disc.id}
+                        onOpenModal={() => setDisciplinaSelecionada(disc.id)}
+                        onCloseModal={() => setDisciplinaSelecionada(null)}
+                        onAddMonitor={handleAddMonitor}
+                        reloadMonitoresKey={reloadMonitoresKey}
+                      />
+                    )}
+                  </DisciplinaCard>
 
-              ))}
-          </div>
+                ))}
+            </div>
 
-          {/* Modal de criação de disciplina */}
-          <Dialog open={modalAberto} onOpenChange={setModalAberto}>
-            <DialogContent className="max-w-2xl p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white border border-[#b2c9d6]">
-              <DialogHeader>
-                <DialogTitle className="text-2xl mb-2 text-primary drop-shadow-sm">Nova Disciplina</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCriarDisciplina} className="space-y-6 mt-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="nome" className="text-primary">Nome da monitoria</Label>
-                  <Input
-                    id="nome"
-                    value={novaDisciplina.nome}
-                    onChange={e => setNovaDisciplina({ ...novaDisciplina, nome: e.target.value })}
-                    required
-                    className="h-12 text-lg bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                <div className="flex items-center gap-4">
-                  <Checkbox
-                    id="permiteMesmoHorario"
-                    checked={novaDisciplina.permiteMesmoHorario}
-                    onCheckedChange={checked => setNovaDisciplina({ ...novaDisciplina, permiteMesmoHorario: !!checked })}
-                  />
-                  <Label htmlFor="permiteMesmoHorario" className="cursor-pointer text-base text-primary">Permitir monitores no mesmo horário</Label>
-                </div>
-                {/* Campo de tópicos */}
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="topicos" className="text-primary">Tópicos</Label>
-                  <div className="flex gap-2">
+            {/* Modal de criação de disciplina */}
+            <Dialog open={modalAberto} onOpenChange={setModalAberto}>
+              <DialogContent className="max-w-2xl p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white border border-[#b2c9d6]">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl mb-2 text-primary drop-shadow-sm">Nova Disciplina</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCriarDisciplina} className="space-y-6 mt-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="nome" className="text-primary">Nome da monitoria</Label>
                     <Input
-                      id="topicos"
-                      placeholder="Digite um tópico e pressione Enter"
-                      value={topicoInput}
-                      onChange={e => setTopicoInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && topicoInput.trim()) {
-                          e.preventDefault();
-                          if (!novaDisciplina.topicos.includes(topicoInput.trim())) {
-                            setNovaDisciplina({ ...novaDisciplina, topicos: [...novaDisciplina.topicos, topicoInput.trim()] });
-                          }
-                          setTopicoInput("");
-                        }
-                      }}
-                      className="h-12 text-lg flex-1 bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
+                      id="nome"
+                      value={novaDisciplina.nome}
+                      onChange={e => setNovaDisciplina({ ...novaDisciplina, nome: e.target.value })}
+                      required
+                      className="h-12 text-lg bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
                     />
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {novaDisciplina.topicos.map((topico, idx) => (
-                      <span key={idx} className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium shadow">
-                        {topico}
-                        <button
-                          type="button"
-                          className="ml-2 text-primary hover:text-red-500 focus:outline-none"
-                          onClick={() => setNovaDisciplina({ ...novaDisciplina, topicos: novaDisciplina.topicos.filter((_, i) => i !== idx) })}
-                          aria-label={`Remover tópico ${topico}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                  <div className="flex items-center gap-4">
+                    <Checkbox
+                      id="permiteMesmoHorario"
+                      checked={novaDisciplina.permiteMesmoHorario}
+                      onCheckedChange={checked => setNovaDisciplina({ ...novaDisciplina, permiteMesmoHorario: !!checked })}
+                    />
+                    <Label htmlFor="permiteMesmoHorario" className="cursor-pointer text-base text-primary">Permitir monitores no mesmo horário</Label>
                   </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" className="w-full h-12 text-lg bg-primary text-white hover:bg-green-700">Criar disciplina</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  {/* Campo de tópicos */}
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="topicos" className="text-primary">Tópicos</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="topicos"
+                        placeholder="Digite um tópico e pressione Enter"
+                        value={topicoInput}
+                        onChange={e => setTopicoInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" && topicoInput.trim()) {
+                            e.preventDefault();
+                            if (!novaDisciplina.topicos.includes(topicoInput.trim())) {
+                              setNovaDisciplina({ ...novaDisciplina, topicos: [...novaDisciplina.topicos, topicoInput.trim()] });
+                            }
+                            setTopicoInput("");
+                          }
+                        }}
+                        className="h-12 text-lg flex-1 bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {novaDisciplina.topicos.map((topico, idx) => (
+                        <span key={idx} className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium shadow">
+                          {topico}
+                          <button
+                            type="button"
+                            className="ml-2 text-primary hover:text-red-500 focus:outline-none"
+                            onClick={() => setNovaDisciplina({ ...novaDisciplina, topicos: novaDisciplina.topicos.filter((_, i) => i !== idx) })}
+                            aria-label={`Remover tópico ${topico}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" className="w-full h-12 text-lg bg-primary text-white hover:bg-green-700">Criar disciplina</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
 
-          {/* Modal de edição de disciplina */}
-          <Dialog open={!!editando} onOpenChange={v => { if (!v) setEditando(null); }}>
-            <DialogContent className="max-w-2xl p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white border border-[#b2c9d6]">
-              <DialogHeader>
-                <DialogTitle className="text-2xl mb-2 text-primary drop-shadow-sm">Editar Disciplina</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleEditarDisciplina} className="space-y-6 mt-4">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="edit-nome" className="text-primary">Nome da monitoria</Label>
-                  <Input
-                    id="edit-nome"
-                    value={editDisciplina.nome}
-                    onChange={e => setEditDisciplina({ ...editDisciplina, nome: e.target.value })}
-                    required
-                    className="h-12 text-lg bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
-                  />
-                </div>
-                <div className="flex items-center gap-4">
-                  <Checkbox
-                    id="edit-permiteMesmoHorario"
-                    checked={editDisciplina.permiteMesmoHorario}
-                    onCheckedChange={checked => setEditDisciplina({ ...editDisciplina, permiteMesmoHorario: !!checked })}
-                  />
-                  <Label htmlFor="edit-permiteMesmoHorario" className="cursor-pointer text-base text-primary">Permitir monitores no mesmo horário</Label>
-                </div>
-                {/* Campo de tópicos */}
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="edit-topicos" className="text-primary">Tópicos</Label>
-                  <div className="flex gap-2">
+            {/* Modal de edição de disciplina */}
+            <Dialog open={!!editando} onOpenChange={v => { if (!v) setEditando(null); }}>
+              <DialogContent className="max-w-2xl p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white border border-[#b2c9d6]">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl mb-2 text-primary drop-shadow-sm">Editar Disciplina</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleEditarDisciplina} className="space-y-6 mt-4">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="edit-nome" className="text-primary">Nome da monitoria</Label>
                     <Input
-                      id="edit-topicos"
-                      placeholder="Digite um tópico e pressione Enter"
-                      value={editTopicoInput}
-                      onChange={e => setEditTopicoInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && editTopicoInput.trim()) {
-                          e.preventDefault();
-                          if (!editDisciplina.topicos.includes(editTopicoInput.trim())) {
-                            setEditDisciplina({ ...editDisciplina, topicos: [...editDisciplina.topicos, editTopicoInput.trim()] });
-                          }
-                          setEditTopicoInput("");
-                        }
-                      }}
-                      className="h-12 text-lg flex-1 bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
+                      id="edit-nome"
+                      value={editDisciplina.nome}
+                      onChange={e => setEditDisciplina({ ...editDisciplina, nome: e.target.value })}
+                      required
+                      className="h-12 text-lg bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
                     />
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {editDisciplina.topicos.map((topico, idx) => (
-                      <span key={idx} className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium shadow">
-                        {topico}
-                        <button
-                          type="button"
-                          className="ml-2 text-primary hover:text-red-500 focus:outline-none"
-                          onClick={() => setEditDisciplina({ ...editDisciplina, topicos: editDisciplina.topicos.filter((_, i) => i !== idx) })}
-                          aria-label={`Remover tópico ${topico}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                  <div className="flex items-center gap-4">
+                    <Checkbox
+                      id="edit-permiteMesmoHorario"
+                      checked={editDisciplina.permiteMesmoHorario}
+                      onCheckedChange={checked => setEditDisciplina({ ...editDisciplina, permiteMesmoHorario: !!checked })}
+                    />
+                    <Label htmlFor="edit-permiteMesmoHorario" className="cursor-pointer text-base text-primary">Permitir monitores no mesmo horário</Label>
                   </div>
-                </div>
-                <DialogFooter>
-                  <Button type="submit" className="w-full h-12 text-lg bg-primary text-white hover:bg-green-700">Salvar alterações</Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </main>
-      </SidebarProvider>
-    </div>
+                  {/* Campo de tópicos */}
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="edit-topicos" className="text-primary">Tópicos</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="edit-topicos"
+                        placeholder="Digite um tópico e pressione Enter"
+                        value={editTopicoInput}
+                        onChange={e => setEditTopicoInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter" && editTopicoInput.trim()) {
+                            e.preventDefault();
+                            if (!editDisciplina.topicos.includes(editTopicoInput.trim())) {
+                              setEditDisciplina({ ...editDisciplina, topicos: [...editDisciplina.topicos, editTopicoInput.trim()] });
+                            }
+                            setEditTopicoInput("");
+                          }
+                        }}
+                        className="h-12 text-lg flex-1 bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {editDisciplina.topicos.map((topico, idx) => (
+                        <span key={idx} className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium shadow">
+                          {topico}
+                          <button
+                            type="button"
+                            className="ml-2 text-primary hover:text-red-500 focus:outline-none"
+                            onClick={() => setEditDisciplina({ ...editDisciplina, topicos: editDisciplina.topicos.filter((_, i) => i !== idx) })}
+                            aria-label={`Remover tópico ${topico}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" className="w-full h-12 text-lg bg-primary text-white hover:bg-green-700">Salvar alterações</Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </main>
+        </SidebarProvider>
+      </div>
+    </>
   );
 }

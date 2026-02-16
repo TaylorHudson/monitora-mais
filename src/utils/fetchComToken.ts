@@ -18,6 +18,12 @@ export function deleteCookie(name: string) {
 export async function fetchComToken(input: RequestInfo, init: RequestInit = {}) {
   let token = getCookie("token");
   let refreshToken = getCookie("refreshToken");
+
+  if (!token && !refreshToken) {
+    window.location.href = "/login";
+    throw new Error("Sessão expirada");
+  }
+
   const authHeaders = token
     ? { Authorization: `Bearer ${token}` }
     : {};
@@ -29,9 +35,8 @@ export async function fetchComToken(input: RequestInfo, init: RequestInit = {}) 
 
   let response = await fetch(input, init);
 
-  // Tenta refresh se 401/403
   if ((response.status === 401 || response.status === 403) && refreshToken) {
-    const refreshRes = await fetch(
+    const refreshResponse = await fetch(
       `${import.meta.env.VITE_API_URL}/auth/refresh-token`,
       {
         method: "POST",
@@ -39,31 +44,34 @@ export async function fetchComToken(input: RequestInfo, init: RequestInit = {}) 
         body: JSON.stringify({ refreshToken }),
       }
     );
-    if (refreshRes.ok) {
-      const data = await refreshRes.json();
+
+    if (refreshResponse.ok) {
+      const data = await refreshResponse.json();
+
       if (data.token) {
         setCookie("token", data.token);
         token = data.token;
+
         init.headers = {
           ...(init.headers || {}),
           Authorization: `Bearer ${token}`,
         };
+
         response = await fetch(input, init);
       }
     } else {
-      // Se o refresh falhar, remove os cookies e redireciona para login
       deleteCookie("token");
       deleteCookie("refreshToken");
       window.location.href = "/login";
+      throw new Error("Sessão expirada");
     }
   }
 
-  // --- Tratamento de erros customizados do backend ---
   if (!response.ok) {
     let errorMessage = "Erro inesperado. Tente novamente.";
     try {
       const data = await response.clone().json();
-      if (data && data.errorCode) {
+      if (data?.errorCode) {
         // Mapeamento dos códigos para mensagens amigáveis
         const errorMap: Record<string, string> = {
           ERROR_100: "Verifique os campos do formulário.",
@@ -90,10 +98,7 @@ export async function fetchComToken(input: RequestInfo, init: RequestInit = {}) 
       } else if (data && data.message) {
         errorMessage = data.message;
       }
-    } catch (e) {
-      // Se não for JSON, ignora
-    }
-    // Lança erro para ser tratado no frontend
+    } catch (e) {}
     throw new Error(errorMessage);
   }
 

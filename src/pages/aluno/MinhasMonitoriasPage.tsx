@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppSidebarAluno } from "../../components/app-sidebaraluno";
 import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { MonitoriaCard } from "./components/MonitoriaCard";
 import { Calendar } from "lucide-react";
-import { fetchComToken } from "../../utils/fetchComToken";
+import { fetchComToken } from "../../services/authFetch";
 
 // Tipagem para os dados de monitoria
 type Monitoria = {
@@ -20,25 +20,24 @@ export default function MinhasMonitoriasPage() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
+  async function carregarMonitorias() {
+    try {
+      setLoading(true);
+      const res = await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/schedules/students/me`
+      );
+
+      const data = await res.json();
+      setMonitorias(data);
+    } catch (err: any) {
+      setErro(err.message || "Erro ao buscar monitorias");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
-    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/schedules/students/me`)
-      .then(async (res) => {
-        if (!res.ok) {
-          const msg = await res.text();
-          setErro(msg || "Erro ao buscar monitorias");
-          console.error("Erro monitorias:", msg);
-          return [];
-        }
-        const data = await res.json();
-        console.log("Monitorias recebidas:", data);
-        return data;
-      })
-      .then(setMonitorias)
-      .catch((err) => {
-        setErro(err.message);
-        console.error("Erro monitorias:", err);
-      })
-      .finally(() => setLoading(false));
+    carregarMonitorias();
   }, []);
 
   if (erro) return <div className="text-red-600 p-4">{erro}</div>;

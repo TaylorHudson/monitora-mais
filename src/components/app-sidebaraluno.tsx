@@ -11,6 +11,7 @@ import {
   useSidebar,
 } from "./ui/sidebar"
 import { Link, useLocation } from "react-router-dom"
+import { clearAuthTokens } from "../services/authStorage";
 
 const items = [
   {
@@ -40,8 +41,7 @@ export function AppSidebarAluno() {
   const { state } = useSidebar(); // "expanded" ou "collapsed"
 
   function handleLogout() {
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    clearAuthTokens();
     window.location.href = "/login";
   }
 

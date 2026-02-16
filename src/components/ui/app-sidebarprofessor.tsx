@@ -9,10 +9,9 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
-  SidebarProvider,
-  SidebarTrigger,
 } from "./sidebar";
 import { Link, useLocation } from "react-router-dom";
+import { clearAuthTokens } from "../../services/authStorage";
 
 // Ícones e rotas do professor
 const items = [
@@ -34,8 +33,7 @@ const items = [
 ];
 
 function handleLogout() {
-  document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-  document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  clearAuthTokens();
   window.location.href = "/login";
 }
 

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { AppSidebarProfessor } from "../../components/ui/app-sidebarprofessor";
 import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
-import { fetchComToken } from "../../utils/fetchComToken";
+import { fetchComToken } from "../../services/authFetch";
 import { Badge } from "../../components/ui/badge";
 
 // Tipagem dos horários
@@ -15,8 +14,7 @@ type Horario = {
   nano: number;
 };
 
-// Tipagem do item retornado pela API
-type Pendente = {
+type Requisicao = {
   id: number;
   studentName?: string;
   student?: { name?: string };
@@ -28,36 +26,30 @@ type Pendente = {
 };
 
 export default function RequisicoesDeMonitoraPage() {
-  const [pendentes, setPendentes] = useState<Pendente[]>([]);
+  const [requisicao, setRequisicao] = useState<Requisicao[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
   const [statusFiltro, setStatusFiltro] = useState<"PENDING" | "APPROVED" | "DENIED">("PENDING");
   const [erro, setErro] = useState<string | null>(null);
 
+  async function buscarRequisicoesDeMonitoria(status: string) {
+    const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/schedules/teachers/filter?status=${status}`)
+    const data = await res.json();
+
+    setRequisicao([]);
+    if (Array.isArray(data) && data.length > 0) {
+      setRequisicao(data);
+    }
+  }
+
   useEffect(() => {
-    setPendentes([]); // Limpa antes de buscar
-    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/schedules/teachers/filter?status=${statusFiltro}`)
-      .then(res => {
-        if (!res.ok) throw new Error("Erro ao buscar agendamentos");
-        return res.json();
-      })
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setPendentes(data);
-        } else {
-          setPendentes([]);
-        }
-      })
-      .catch((err) => {
-        setPendentes([]);
-        setErro(err.message || "Erro ao buscar agendamentos");
-      });
+    buscarRequisicoesDeMonitoria(statusFiltro);
   }, [statusFiltro]);
 
   async function handleAcao(id: number, acao: "approve" | "deny") {
     setLoadingId(id);
     const url = `${import.meta.env.VITE_API_URL}/monitoring/schedules/teachers/${id}/${acao}`;
     await fetchComToken(url, { method: "PATCH" });
-    setPendentes(pendentes => pendentes.filter(p => p.id !== id));
+    setRequisicao(req => req.filter(p => p.id !== id));
     setLoadingId(null);
   }
 
@@ -109,12 +101,9 @@ export default function RequisicoesDeMonitoraPage() {
             {erro && (
               <div className="text-center text-red-600 py-4">{erro}</div>
             )}
-            {pendentes.map((item) => {
+            {requisicao.map((item) => {
               const aluno = (item as any).monitor || '-';
-              const dias: Record<string, string> = {
-                MONDAY: 'Segunda', TUESDAY: 'Terça', WEDNESDAY: 'Quarta', THURSDAY: 'Quinta', FRIDAY: 'Sexta', SATURDAY: 'Sábado', SUNDAY: 'Domingo',
-              };
-              const dia = dias[item.dayOfWeek] || item.dayOfWeek || '-';
+              const dia = traduzirDia(item.dayOfWeek);
               function formatarHora(h: any) {
                 if (!h) return '-';
                 if (typeof h === 'string') return h.slice(0,5);
@@ -163,7 +152,7 @@ export default function RequisicoesDeMonitoraPage() {
                 </Card>
               );
             })}
-            {pendentes.length === 0 && (
+            {requisicao.length === 0 && (
               <div className="text-center text-gray-400 py-8">Nenhuma requisição encontrada.</div>
             )}
           </div>

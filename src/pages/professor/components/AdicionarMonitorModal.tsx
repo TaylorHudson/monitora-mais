@@ -6,7 +6,7 @@ import { useState } from "react";
 type AdicionarMonitorModalProps = {
   open: boolean;
   onClose: () => void;
-  onConfirm: (data: { nome: string; matricula: string }) => void;
+  onConfirm: (data: { matricula: string }) => void;
 };
 
 export function AdicionarMonitorModal({
@@ -14,16 +14,13 @@ export function AdicionarMonitorModal({
   onClose,
   onConfirm,
 }: AdicionarMonitorModalProps) {
-  const [nome, setNome] = useState("");
   const [matricula, setMatricula] = useState("");
 
   function handleConfirm() {
-    if (!nome || !matricula) return;
+    if (!matricula) return;
 
-    onConfirm({ nome, matricula });
+    onConfirm({ matricula });
 
-    // limpa os campos após confirmar
-    setNome("");
     setMatricula("");
     onClose();
   }
@@ -38,13 +35,6 @@ export function AdicionarMonitorModal({
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-4">
-          <Input
-            placeholder="Nome do monitor"
-            value={nome}
-            onChange={(e) => setNome(e.target.value)}
-            className="h-12 text-lg bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
-          />
-
           <Input
             placeholder="Matrícula"
             value={matricula}

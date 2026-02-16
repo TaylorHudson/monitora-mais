@@ -8,11 +8,12 @@ import {
   FormMessage,
 } from "../../../components/ui/form"
 import { Input } from "../../../components/ui/input"
-import { setCookie } from "../../../utils/fetchComToken";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
+import { useLogin } from "../../../hooks/useLogin";
+import { Spinner } from "../../../components/ui/Spinner";
 
 
 const formSchemaLogin = z.object({
@@ -27,73 +28,61 @@ export function LoginForm() {
       matricula: "",
       password: "",
     },
-  })
-  const navigate = useNavigate();
+  });
 
-  function onSubmit(values: z.infer<typeof formSchemaLogin>) {
-    fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        registration: values.matricula,
-        password: values.password,
-      }),
-    })
-      .then(async (res) => {
-        const data = await res.json();
-        if (res.ok) {
-          setCookie("token", data.accessToken);
-          setCookie("refreshToken", data.refreshToken);
-          // 7 dígitos = professor, caso contrário aluno
-          if (/^\d{7}$/.test(values.matricula)) {
-            navigate("/professor/disciplinas");
-          } else {
-            navigate("/requisitar-horario");
-          }
-        } else {
-          alert(data.message || "Matrícula ou senha inválida");
-        }
-      })
-      .catch(() => {
-        alert("Erro ao conectar ao servidor");
-      })
+  const navigate = useNavigate();
+  const { handleLogin, loading } = useLogin();
+
+  async function onSubmit(values: z.infer<typeof formSchemaLogin>) {
+    try {
+      await handleLogin(values.matricula, values.password);
+
+      if (/^\d{7}$/.test(values.matricula)) {
+        navigate("/professor/disciplinas");
+      } else {
+        navigate("/requisitar-horario");
+      }
+    } catch (err: any) {
+      alert(err.message);
+    }
   }
 
   return (
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                    <FormField
-                      control={form.control}
-                      name="matricula"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl className="w-full">
-                            <Input placeholder="Matrícula" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl className="w-full">
-                            <Input placeholder="Senha" type="password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="flex justify-center">
-                      <Button type="submit" className="w-full text-white bg-green-700 hover:bg-green-800">Entrar</Button>
-                    </div>
-                  </form>
-                </Form>
-              
+    <>
+    {loading && <Spinner />}
+
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <FormField
+          control={form.control}
+          name="matricula"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl className="w-full">
+                <Input placeholder="Matrícula" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormControl className="w-full">
+                <Input placeholder="Senha" type="password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-center">
+          <Button type="submit" className="w-full text-white bg-green-700 hover:bg-green-800">Entrar</Button>
+        </div>
+      </form>
+    </Form>   
+    </>
   )
 }
 
