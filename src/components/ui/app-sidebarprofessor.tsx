@@ -16,7 +16,7 @@ import { clearAuthTokens } from "../../services/authStorage";
 // Ícones e rotas do professor
 const items = [
   {
-    title: "Requisições de Monitoria",
+    title: "Requisições",
     url: "/professor/requisicoes-monitoria",
     icon: ClipboardList,
   },
@@ -26,7 +26,7 @@ const items = [
     icon: BookOpen,
   },
   {
-    title: "Estatísticas das Disciplinas",
+    title: "Estatísticas",
     url: "/professor/estatisticas-disciplinas",
     icon: BarChart3,
   },

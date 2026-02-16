@@ -5,9 +5,9 @@ import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 import { fetchComToken } from "../../services/authFetch";
 import { Spinner } from "../../components/ui/Spinner";
+import { toastApiError } from "../../utils/toast";
 
 export default function RequisitarHorarioPage() {
-  const [erro, setErro] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [cardExpandido, setCardExpandido] = useState<number | null>(null);
   const [monitorias, setMonitorias] = useState<any[]>([]);
@@ -22,7 +22,7 @@ export default function RequisitarHorarioPage() {
         setMonitorias(data);
       else setMonitorias([]);
     } catch (err: Error | any) {
-      setErro(err.message || "Erro ao buscar monitorias");
+      toastApiError(err);
     } finally {
       setLoading(false);
     }
@@ -42,7 +42,7 @@ export default function RequisitarHorarioPage() {
         setCargaHorariaFaltante(null);
       }
     } catch(err: Error | any) {
-      setErro(err.message || "Erro ao buscar carga horária faltante");
+      toastApiError(err);
       setCargaHorariaFaltante(null);
     } finally {
       setLoading(false);

@@ -11,6 +11,7 @@ import { fetchComToken } from "../../services/authFetch";
 import { DisciplinaCard } from "./components/DisciplinaCard";
 import { DisciplinaExpand } from "./components/DisciplinaExpand";
 import { Spinner } from "../../components/ui/Spinner";
+import { toastApiError, toastSuccess } from "../../utils/toast";
 
 type Disciplina = {
   id: number;
@@ -142,9 +143,13 @@ export default function DisciplinasPage() {
         }),
       })
 
+      toastSuccess(
+        "Monitor adicionado",
+        "O monitor foi vinculado com sucesso"
+      );
       setReloadMonitoresKey((prev) => prev + 1);
     } catch (err: Error | any) {
-      showToast(err.message || 'Erro ao adicionar monitor', 'error');
+      toastApiError(err);
     } finally {
       setLoading(false);
     }
@@ -357,7 +362,6 @@ export default function DisciplinasPage() {
               </DialogContent>
             </Dialog>
 
-            {/* Modal de edição de disciplina */}
             <Dialog open={!!editando} onOpenChange={v => { if (!v) setEditando(null); }}>
               <DialogContent className="max-w-2xl p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white border border-[#b2c9d6]">
                 <DialogHeader>
