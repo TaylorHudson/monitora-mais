@@ -16,11 +16,10 @@ import { toastApiError, toastSuccess } from "../../utils/toast";
 type Disciplina = {
   id: number;
   nome: string;
-  monitores: number;
-  professor: string;
-  topicos: string[];
   permiteMesmoHorario: boolean;
-  schedules?: any[]; // Agendamentos da disciplina
+  topicos: string[];
+  ultimaRequisicao?: string | null; 
+  requisicoesPendentes: number;
 };
 
 export default function DisciplinasPage() {
@@ -44,15 +43,39 @@ export default function DisciplinasPage() {
       const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/me`);
       const data = await res.json();
       if (Array.isArray(data)) {
-        setDisciplinas(data.map((d: any) => ({
-          id: d.id,
-          nome: d.name,
-          professor: d.teacher,
-          permiteMesmoHorario: d.allowMonitorsSameTime,
-          topicos: d.topics || [],
-          monitores: d.schedules ? d.schedules.length : 0,
-          schedules: d.schedules || [],
-        })));
+        setDisciplinas(
+          data.map((d: any) => {
+            const schedules = d.schedules || [];
+            const ultimaRequisicao = schedules.length
+              ? schedules.reduce((maisRecente: any, atual: any) =>
+                  new Date(atual.requestedAt) > new Date(maisRecente.requestedAt)
+                    ? atual
+                    : maisRecente
+                )
+              : null;
+            
+            const requisicoesPendentes = schedules.filter((s: any) => s.status === "PENDING").length;
+
+            return {
+              id: d.id,
+              nome: d.name,
+              permiteMesmoHorario: d.allowMonitorsSameTime,
+              topicos: d.topics || [],
+              ultimaRequisicao: ultimaRequisicao ? ultimaRequisicao.requestedAt : null,
+              requisicoesPendentes: requisicoesPendentes
+            }
+          })
+        );
+
+        // setDisciplinas(data.map((d: any) => ({
+        //   id: d.id,
+        //   nome: d.name,
+        //   professor: d.teacher,
+        //   permiteMesmoHorario: d.allowMonitorsSameTime,
+        //   topicos: d.topics || [],
+        //   monitores: d.schedules ? d.schedules.length : 0,
+        //   schedules: d.schedules || [],
+        // })));
       } else {
         setDisciplinas([]);
       } 

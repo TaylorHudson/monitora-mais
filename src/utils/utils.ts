@@ -27,3 +27,15 @@ export function formatarHora(horario: any) {
     return `${String(horario.hour).padStart(2,'0')}:${String(horario.minute).padStart(2,'0')}`;
   return '-';
 }
+
+export function formatarTempoRelativo(dataIso: string) {
+  const diffMs = Date.now() - new Date(dataIso).getTime();
+  const minutos = Math.floor(diffMs / 60000);
+  const horas = Math.floor(minutos / 60);
+  const dias = Math.floor(horas / 24);
+
+  if (dias > 0) return `há ${dias} dia${dias > 1 ? "s" : ""}`;
+  if (horas > 0) return `há ${horas} hora${horas > 1 ? "s" : ""}`;
+  if (minutos > 0) return `há ${minutos} minuto${minutos > 1 ? "s" : ""}`;
+  return "agora mesmo";
+}
