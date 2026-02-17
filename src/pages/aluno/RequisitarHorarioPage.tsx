@@ -4,34 +4,32 @@ import { MateriaCard } from "./components/MateriaCard";
 import { useEffect, useState } from "react";
 import { Calendar } from "lucide-react";
 import { fetchComToken } from "../../services/authFetch";
-import { Spinner } from "../../components/ui/Spinner";
 import { toastApiError } from "../../utils/toast";
+import { useLoading } from "../../contexts/LoadingContext";
 
 export default function RequisitarHorarioPage() {
-  const [loading, setLoading] = useState(true);
   const [cardExpandido, setCardExpandido] = useState<number | null>(null);
   const [monitorias, setMonitorias] = useState<any[]>([]);
   const [cargaHorariaFaltante, setCargaHorariaFaltante] = useState<string | null>(null);
+  const { setLoading } = useLoading();
 
   async function carregarMonitorias() {
     try {
       setLoading(true);
-      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/students/me`);
+      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/students/me`, {}, setLoading);
       const data = await res.json();
       if (Array.isArray(data)) 
         setMonitorias(data);
       else setMonitorias([]);
     } catch (err: Error | any) {
       toastApiError(err);
-    } finally {
-      setLoading(false);
     }
   }
 
   async function carregarCargaHorariaFaltante() {
     try {
       setLoading(true);
-      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/weekly-workloads/missing`);
+      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/weekly-workloads/missing`, {}, setLoading);
       const data = await res.json();
       if (data.missingWeeklyWorkload) {
           const h = String(data.missingWeeklyWorkload.hour).padStart(2, '0');
@@ -44,8 +42,6 @@ export default function RequisitarHorarioPage() {
     } catch(err: Error | any) {
       toastApiError(err);
       setCargaHorariaFaltante(null);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -56,7 +52,6 @@ export default function RequisitarHorarioPage() {
 
   return (
     <>
-      {loading && (<Spinner />)}
       <div className="flex h-full w-full bg-[#F1F7FA]">
         <SidebarProvider>
           <AppSidebarAluno />

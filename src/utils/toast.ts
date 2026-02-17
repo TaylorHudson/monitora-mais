@@ -19,7 +19,7 @@ export function toastError(
 }
 
 export function toastApiError(
-  error: unknown,
+  error: Error | any,
   fallbackMessage = "Erro inesperado"
 ) {
   if (

@@ -5,8 +5,9 @@ import { Card } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { fetchComToken } from "../../services/authFetch";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LabelList } from "recharts";
+import { useLoading } from "../../contexts/LoadingContext";
+import { toastApiError } from "../../utils/toast";
 
-// Tipagem do modelo retornado
 interface Schedule {
   id: number;
   monitor: string;
@@ -29,19 +30,20 @@ interface Disciplina {
 
 export default function EstatisticasDisciplinasPage() {
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const { setLoading } = useLoading();
 
   async function buscarDisciplinas() {
     try {
-      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/me`)
+      const res = await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/teachers/me`,
+        {},
+        setLoading
+      )
       const data = await res.json();
       setDisciplinas(Array.isArray(data) ? data : []);
     } catch (err: Error | any) {
-      setErro(err.message || "Erro ao buscar estatísticas");
+      toastApiError(err, "Erro ao buscar estatísticas");
       setDisciplinas([]);
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -57,10 +59,6 @@ export default function EstatisticasDisciplinasPage() {
         <main className="flex-1 p-8 min-h-screen">
           <h1 className="text-3xl font-semibold mb-4 text-primary drop-shadow-sm">Estatísticas das Disciplinas</h1>
           <p className="text-gray-700 mb-8">Veja a quantidade de vezes que cada tópico foi relacionado a monitorias.</p>
-          {erro && <div className="text-red-600 mb-4">{erro}</div>}
-          {loading ? (
-            <div className="text-center text-gray-400 py-8">Carregando estatísticas...</div>
-          ) : (
             <div className="flex flex-col gap-8">
               {disciplinas.map((disc) => {
                 const chartData = disc.topics.map((topico) => ({
@@ -106,7 +104,6 @@ export default function EstatisticasDisciplinasPage() {
                 );
               })}
             </div>
-          )}
         </main>
       </SidebarProvider>
     </div>

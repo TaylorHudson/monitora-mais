@@ -12,6 +12,7 @@ import { DisciplinaCard } from "./components/DisciplinaCard";
 import { DisciplinaExpand } from "./components/DisciplinaExpand";
 import { Spinner } from "../../components/ui/Spinner";
 import { toastApiError, toastSuccess } from "../../utils/toast";
+import { useLoading } from "../../contexts/LoadingContext";
 
 type Disciplina = {
   id: number;
@@ -29,18 +30,21 @@ export default function DisciplinasPage() {
   const [topicoInput, setTopicoInput] = useState("");
   const [filtro, setFiltro] = useState("");
   const [expanded, setExpanded] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
   const [editando, setEditando] = useState<null | number>(null);
   const [editDisciplina, setEditDisciplina] = useState<{ nome: string; permiteMesmoHorario: boolean; topicos: string[] }>({ nome: "", permiteMesmoHorario: false, topicos: [] });
   const [editTopicoInput, setEditTopicoInput] = useState("");
   const [reloadMonitoresKey, setReloadMonitoresKey] = useState(0);
 
   const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<number | null>(null);
+  const { setLoading } = useLoading();
 
   async function carregarMonitorias() {
     try {
-      setLoading(true);
-      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/me`);
+      const res = await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/teachers/me`,
+        {}, 
+        setLoading
+      );
       const data = await res.json();
       if (Array.isArray(data)) {
         setDisciplinas(
@@ -67,24 +71,12 @@ export default function DisciplinasPage() {
           })
         );
 
-        // setDisciplinas(data.map((d: any) => ({
-        //   id: d.id,
-        //   nome: d.name,
-        //   professor: d.teacher,
-        //   permiteMesmoHorario: d.allowMonitorsSameTime,
-        //   topicos: d.topics || [],
-        //   monitores: d.schedules ? d.schedules.length : 0,
-        //   schedules: d.schedules || [],
-        // })));
       } else {
         setDisciplinas([]);
       } 
     }
     catch {
       setDisciplinas([]);
-    }
-    finally {
-      setLoading(false);
     }
   }
 
@@ -239,7 +231,6 @@ export default function DisciplinasPage() {
 
   return (
     <>
-        {loading && <Spinner />}
         <div className="flex h-full w-full bg-[#F1F7FA]">
         <SidebarProvider>
           <SidebarTrigger className="md:hidden fixed top-4 left-4 z-50" />

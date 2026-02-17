@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchComToken } from "../../../services/authFetch";
-import { Spinner } from "../../../components/ui/Spinner";
+import { useLoading } from "../../../contexts/LoadingContext";
+import { toastApiError } from "../../../utils/toast";
 
 type Monitor = {
   name: string;
@@ -29,19 +30,21 @@ function formatarDias(dias: string[]) {
 
 
 export function MonitoresTable({ disciplinaId, reloadMonitoresKey }: MonitoresTableProps) {
-  const [loading, setLoading] = useState(true);
   const [monitores, setMonitores] = useState<Monitor[]>([]);
+  const { setLoading } = useLoading();
 
   async function carregarDetalhesDeMonitoria() {
     try {
-      setLoading(true);
-      const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/teachers/details/${disciplinaId}`);
+      const res = await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/teachers/details/${disciplinaId}`,
+        {},
+        setLoading
+      );
       const data = await res.json();
       setMonitores(data.students || []);
-    } catch {
+    } catch(err: Error | any) {
       setMonitores([]);
-    } finally {
-      setLoading(false);
+      toastApiError(err, "Erro ao buscar detalhes da monitoria");
     }
   }
 
@@ -53,7 +56,6 @@ export function MonitoresTable({ disciplinaId, reloadMonitoresKey }: MonitoresTa
 
   return (
     <>
-      {loading && <Spinner />}
       <div className="mt-6 overflow-x-auto">
         <table className="w-full border-collapse rounded-xl overflow-hidden bg-white/70 shadow-sm">
           <thead className="bg-primary/10">

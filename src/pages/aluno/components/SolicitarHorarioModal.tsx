@@ -65,12 +65,6 @@ export function SolicitarHorarioModal({
         return;
       }
       
-      console.log({
-                monitoring: monitoria,
-                dayOfWeek: converterDiaParaIngles(diaSelecionado),
-                startTime: horaInicio + ":00",
-                endTime: horaFim + ":00",
-              })
       try {
         await fetchComToken(
           `${import.meta.env.VITE_API_URL}/monitoring/schedules/students`,

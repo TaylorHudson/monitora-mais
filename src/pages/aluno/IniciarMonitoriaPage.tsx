@@ -6,9 +6,9 @@ import { Badge } from "../../components/ui/badge";
 import { Alert, AlertTitle, AlertDescription } from "../../components/ui/alert";
 import { PlayCircle, Clock } from "lucide-react";
 import { fetchComToken } from "../../services/authFetch";
-import { Spinner } from "../../components/ui/Spinner";
+import { toastApiError } from "../../utils/toast";
+import { useLoading } from "../../contexts/LoadingContext";
 
-// Função utilitária para traduzir o dia da semana
 function traduzirDia(dayOfWeek: string) {
   const dias: Record<string, string> = {
     MONDAY: "Segunda-feira",
@@ -22,7 +22,6 @@ function traduzirDia(dayOfWeek: string) {
   return dias[dayOfWeek] || dayOfWeek;
 }
 
-// Função utilitária para formatar horário (08:00:00 -> 08:00)
 function formatarHora(hora: string) {
   if (!hora) return "";
   return hora.slice(0, 5);
@@ -33,26 +32,24 @@ export default function IniciarMonitoriaPage() {
   const [inicio, setInicio] = useState<Date | null>(null);
   const [monitorias, setMonitorias] = useState<any[]>([]);
   const [monitoriaSelecionada, setMonitoriaSelecionada] = useState<string>("");
-  const [loading, setLoading] = useState(false);
   const [monitoriaNome, setMonitoriaNome] = useState<string>("");
-  const [erro, setErro] = useState<string | null>(null);
   const [topicosSelecionados, setTopicosSelecionados] = useState<string[]>([]);
   const [topicosDaMonitoria, setTopicosDaMonitoria] = useState<string[]>([]);
+  const { setLoading } = useLoading();
 
   async function carregarAgendamentosDeMonitoria() {
     try {
-      setLoading(true);
       const res = await fetchComToken(
-          `${import.meta.env.VITE_API_URL}/monitoring/schedules/students/me`
+          `${import.meta.env.VITE_API_URL}/monitoring/schedules/students/me`,
+          {},
+          setLoading
       );
 
       const data = await res.json();
       setMonitorias(Array.isArray(data) ? data : []);
-    } catch (err: any) {
+    } catch (err: Error | any) {
       setMonitorias([]);
-      setErro(err.message || "Erro ao buscar monitorias do dia");
-    } finally {
-      setLoading(false);
+      toastApiError(err, "Erro ao buscar monitorias");
     }
   }
 
@@ -63,35 +60,31 @@ export default function IniciarMonitoriaPage() {
   async function iniciarMonitoria() {
     try {
       if (!monitoriaSelecionada) return;
-      setLoading(true);
-      setErro(null);
-
       await fetchComToken(
-        `${import.meta.env.VITE_API_URL}/monitoring/sessions/students/start`, {
+        `${import.meta.env.VITE_API_URL}/monitoring/sessions/students/start`, 
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ monitoringScheduleId: monitoriaSelecionada }),
-        }
+        },
+        setLoading
       );
       setMonitoriaAtiva(true);
       setInicio(new Date());
     } catch (err: Error | any) {
-      setErro(err.message || "Erro ao iniciar monitoria.");
-    } finally {
-      setLoading(false);
+      toastApiError(err, "Erro ao iniciar monitoria");
     }
   }
 
   async function finalizarMonitoria() {
     try {
       if (!monitoriaSelecionada) return;
-      setLoading(true);
-      setErro(null);
 
       await fetchComToken(
-        `${import.meta.env.VITE_API_URL}/monitoring/sessions/students/finish`, {
+        `${import.meta.env.VITE_API_URL}/monitoring/sessions/students/finish`, 
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -102,7 +95,8 @@ export default function IniciarMonitoriaPage() {
               topics: topicosSelecionados,
             }
           ),
-        }
+        },
+        setLoading
       );
     
       setMonitoriaAtiva(false);
@@ -112,9 +106,7 @@ export default function IniciarMonitoriaPage() {
       setTopicosSelecionados([]);
       setTopicosDaMonitoria([]);
     } catch (err: Error | any) {
-      setErro(err.message || "Erro ao finalizar monitoria.");
-    } finally {
-      setLoading(false);
+      toastApiError(err, "Erro ao finalizar monitoria");
     }
   }
 
@@ -122,14 +114,15 @@ export default function IniciarMonitoriaPage() {
 
   async function buscarMonitoriaAtiva() {
     try {
-      setLoading(true);
       setMonitoriaAtiva(false);
       setInicio(null);
       setMonitoriaSelecionada("");
       setMonitoriaNome("");
 
       const res = await fetchComToken(
-        `${import.meta.env.VITE_API_URL}/monitoring/sessions/students/started`
+        `${import.meta.env.VITE_API_URL}/monitoring/sessions/students/started`,
+        {},
+        setLoading
       );
 
       const data = await res.json();
@@ -140,11 +133,9 @@ export default function IniciarMonitoriaPage() {
           setMonitoriaNome(data.monitoring || "");
         }
     } catch (err: Error | any) {
-      if (!err.message.includes("Nenhuma sessão de monitoria iniciada foi encontrada.")) {
-        setErro(err.message || "Erro ao buscar monitorias");
+      if (!err.message.includes("Nenhuma sessão de monitoria iniciada foi encontrada")) {
+        toastApiError(err, "Erro ao buscar monitorias");
       }
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -167,7 +158,6 @@ export default function IniciarMonitoriaPage() {
 
   return (
     <>
-      {loading && <Spinner />}
       <div className="flex h-full w-full bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white">
         <SidebarProvider>
           <AppSidebarAluno />
@@ -186,19 +176,12 @@ export default function IniciarMonitoriaPage() {
               </p>
               <div className="h-1 w-24 bg-primary/20 rounded mt-4 ml-12" />
             </div>
-            {/* Exibe erro, se houver */}
-            {erro && (
-              <Alert variant="destructive" className="w-full mb-4">
-                <AlertTitle>Erro</AlertTitle>
-                <AlertDescription>{erro}</AlertDescription>
-              </Alert>
-            )}
-            {/* Card lateral minimalista alinhado à esquerda */}
+           
             <div className="flex flex-col gap-6 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white rounded-xl shadow-md border border-[#b2c9d6] w-full p-8 items-start">
               <Badge variant={monitoriaAtiva ? "secondary" : "secondary"} className="mb-2">
                 {monitoriaAtiva ? "Monitoria em andamento" : "Monitoria não iniciada"}
               </Badge>
-              {/* Nome da monitoria selecionada, dia e horário */}
+          
               {monitoriaAtiva && monitoriaNome && (
                 <div className="text-lg font-semibold text-primary w-full">
                   {monitoriaNome}
@@ -273,7 +256,7 @@ export default function IniciarMonitoriaPage() {
                     className="w-72 flex items-center gap-2 justify-center bg-green-600 hover:bg-green-700 text-white"
                     variant="default"
                     onClick={iniciarMonitoria}
-                    disabled={loading || !monitoriaSelecionada}
+                    disabled={!monitoriaSelecionada}
                   >
                     <PlayCircle className="w-5 h-5" /> Iniciar Monitoria
                   </Button>
@@ -283,7 +266,6 @@ export default function IniciarMonitoriaPage() {
                     className="w-72 flex items-center gap-2 justify-center bg-red-600 hover:bg-red-700 text-white"
                     variant="default"
                     onClick={finalizarMonitoria}
-                    disabled={loading}
                   >
                     Finalizar Monitoria
                   </Button>

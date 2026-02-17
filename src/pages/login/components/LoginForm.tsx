@@ -12,8 +12,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
-import { useLogin } from "../../../hooks/useLogin";
-import { Spinner } from "../../../components/ui/Spinner";
+import { login } from "../../../services/authFetch";
+import { useLoading } from "../../../contexts/LoadingContext";
+import { toastApiError } from "../../../utils/toast";
 
 
 const formSchemaLogin = z.object({
@@ -31,26 +32,23 @@ export function LoginForm() {
   });
 
   const navigate = useNavigate();
-  const { handleLogin, loading } = useLogin();
+  const { setLoading } = useLoading();
 
   async function onSubmit(values: z.infer<typeof formSchemaLogin>) {
     try {
-      await handleLogin(values.matricula, values.password);
-
+      await login(values.matricula, values.password, setLoading);
       if (/^\d{7}$/.test(values.matricula)) {
         navigate("/professor/disciplinas");
       } else {
         navigate("/requisitar-horario");
       }
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: Error | any) {
+      toastApiError(err);
     }
   }
 
   return (
     <>
-    {loading && <Spinner />}
-
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField

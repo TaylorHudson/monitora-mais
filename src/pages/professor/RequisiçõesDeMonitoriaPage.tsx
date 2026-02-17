@@ -7,6 +7,7 @@ import { fetchComToken } from "../../services/authFetch";
 import { Badge } from "../../components/ui/badge";
 import { converterDiaParaPortugues, formatarHora } from "../../utils/utils";
 import { toastApiError, toastSuccess } from "../../utils/toast";
+import { useLoading } from "../../contexts/LoadingContext";
 
 type Horario = {
   hour: number;
@@ -29,14 +30,23 @@ type Requisicao = {
 export default function RequisicoesDeMonitoraPage() {
   const [requisicao, setRequisicao] = useState<Requisicao[]>([]);
   const [statusFiltro, setStatusFiltro] = useState<"PENDING" | "APPROVED" | "DENIED">("PENDING");
+  const { setLoading } = useLoading();
 
   async function buscarRequisicoesDeMonitoria(status: string) {
-    const res = await fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/schedules/teachers/filter?status=${status}`)
-    const data = await res.json();
+    try {
+      const res = await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/schedules/teachers/filter?status=${status}`,
+        {},
+        setLoading
+      );
+      const data = await res.json();
 
-    setRequisicao([]);
-    if (Array.isArray(data) && data.length > 0) {
-      setRequisicao(data);
+      setRequisicao([]);
+      if (Array.isArray(data) && data.length > 0) {
+        setRequisicao(data);
+      }
+    } catch (error) {
+      toastApiError(error);
     }
   }
 
