@@ -1,4 +1,4 @@
-import { BookOpen, ClipboardList, LogOut, PanelLeftIcon, BarChart3 } from "lucide-react";
+import { BookOpen, ClipboardList, LogOut, PanelLeftIcon, BarChart3, Users2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,17 +13,21 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import { clearAuthTokens } from "../../services/authStorage";
 
-// Ícones e rotas do professor
 const items = [
-  {
-    title: "Requisições",
-    url: "/professor/requisicoes-monitoria",
-    icon: ClipboardList,
-  },
   {
     title: "Disciplinas",
     url: "/professor/disciplinas",
     icon: BookOpen,
+  },
+  {
+    title: "Monitores",
+    url: "/professor/monitores",
+    icon: Users2,
+  },
+  {
+    title: "Requisições",
+    url: "/professor/requisicoes-monitoria",
+    icon: ClipboardList,
   },
   {
     title: "Estatísticas",

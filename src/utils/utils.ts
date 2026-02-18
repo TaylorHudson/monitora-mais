@@ -39,3 +39,17 @@ export function formatarTempoRelativo(dataIso: string) {
   if (minutos > 0) return `há ${minutos} minuto${minutos > 1 ? "s" : ""}`;
   return "agora mesmo";
 }
+
+export function formatarDias(dias: string[]) {
+  const mapa: Record<string, string> = {
+    MONDAY: "Seg.",
+    TUESDAY: "Ter.",
+    WEDNESDAY: "Qua.",
+    THURSDAY: "Qui.",
+    FRIDAY: "Sex.",
+    SATURDAY: "Sáb.",
+    SUNDAY: "Dom.",
+  };
+
+  return dias.map(d => mapa[d] || d).join(", ");
+}

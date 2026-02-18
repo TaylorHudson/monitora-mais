@@ -3,38 +3,21 @@ import { fetchComToken } from "../../../services/authFetch";
 import { toastApiError } from "../../../utils/toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../components/ui/table";
 import { Button } from "../../../components/ui/button";
-import { UserMinus2 } from "lucide-react";
+import { Eye, UserMinus2 } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../../../components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../../components/ui/tooltip";
-
-type Monitor = {
-  name: string;
-  registration: string;
-  daysOfWeek: string[];
-};
+import type { Agendamento, Monitor } from "../../../services/types/types";
+import { converterDiaParaPortugues, formatarDias } from "../../../utils/utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 
 type MonitoresTableProps = {
   disciplinaId: number;
   reloadMonitoresKey: number;
 };
 
-function formatarDias(dias: string[]) {
-  const mapa: Record<string, string> = {
-    MONDAY: "Seg.",
-    TUESDAY: "Ter.",
-    WEDNESDAY: "Qua.",
-    THURSDAY: "Qui.",
-    FRIDAY: "Sex.",
-    SATURDAY: "Sáb.",
-    SUNDAY: "Dom.",
-  };
-
-  return dias.map(d => mapa[d] || d).join(", ");
-}
-
-
 export function MonitoresTable({ disciplinaId, reloadMonitoresKey }: MonitoresTableProps) {
+  const [verDetalhesAberto, setVerDetalhesAberto] = useState(false);
   const [monitores, setMonitores] = useState<Monitor[]>([]);
+  const [agendamentosAprovados, setAgendamentosAprovados] = useState<Agendamento[]>([]);
 
   async function carregarDetalhesDeMonitoria() {
     try {
@@ -54,47 +37,84 @@ export function MonitoresTable({ disciplinaId, reloadMonitoresKey }: MonitoresTa
     carregarDetalhesDeMonitoria();
   }, [reloadMonitoresKey]);
 
+  async function carregarAgendamentosAprovados(monitor: Monitor) {
+    try {
+      const res = await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/schedules/teachers/filter?status=APPROVED`,
+        {}
+      );
+      const data = await res.json();
+
+      const agendamentosAprovados = data.filter(
+        (a: Agendamento) => a.monitorRegistration === monitor.registration
+      )
+
+      setAgendamentosAprovados(agendamentosAprovados || []);
+    } catch(err: Error | any) {
+      setAgendamentosAprovados([]);
+      toastApiError(err);
+    }
+  }
+
+  function abrirDetalhes(monitor: Monitor) {
+    carregarAgendamentosAprovados(monitor);
+    setVerDetalhesAberto(true);
+  }
+
   if (!monitores || monitores.length === 0) return null;
 
   return (
     <>
-      <div className="mt-6 overflow-x-auto">
-        {/* <table className="w-full border-collapse rounded-xl overflow-hidden bg-white/70 shadow-sm">
-          <thead className="bg-primary/10">
-            <tr>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-primary">
-                Nome do monitor
-              </th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-primary">
-                Matrícula
-              </th>
-              <th className="text-left px-4 py-3 text-sm font-semibold text-primary">
-                Dias de monitoria
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {monitores.map((monitor, index) => (
-              <tr
-                key={index}
-                className="border-t border-[#b2c9d6] hover:bg-primary/5 transition"
-              >
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  {monitor.name}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  {monitor.registration}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-700">
-                  {monitor.daysOfWeek?.length > 0
-                    ? formatarDias(monitor.daysOfWeek)
-                    : "Nenhuma monitoria agendada"}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table> */}
+      <Dialog open={verDetalhesAberto} onOpenChange={setVerDetalhesAberto}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Monitorias agendadas</DialogTitle>
+          </DialogHeader>
 
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Dia</TableHead>
+                <TableHead>Horário</TableHead>
+                <TableHead>Disciplina</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {agendamentosAprovados.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500">
+                    Nenhuma monitoria encontrada
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {agendamentosAprovados.map((item, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    {converterDiaParaPortugues(item.dayOfWeek)}
+                  </TableCell>
+
+                  <TableCell>
+                    {String(item.startTime.hour).padStart(2, "0")}:
+                    {String(item.startTime.minute).padStart(2, "0")}
+                    {" - "}
+                    {String(item.endTime.hour).padStart(2, "0")}:
+                    {String(item.endTime.minute).padStart(2, "0")}
+                  </TableCell>
+
+                  <TableCell>{item.discipline}</TableCell>
+
+                  <TableCell>{item.status}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
+
+      <div className="mt-6 overflow-x-auto">
         <Table className="mt-6 bg-white/70 rounded-xl shadow-sm">
           <TableHeader>
             <TableRow className="bg-primary/10">
@@ -170,6 +190,16 @@ export function MonitoresTable({ disciplinaId, reloadMonitoresKey }: MonitoresTa
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                </TableCell>
+
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => abrirDetalhes(monitor)}
+                  >
+                    <Eye className="h-5 w-5" />
+                  </Button>
                 </TableCell>
 
               </TableRow>

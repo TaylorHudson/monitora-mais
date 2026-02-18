@@ -10,7 +10,6 @@ import { Checkbox } from "../../components/ui/checkbox";
 import { fetchComToken } from "../../services/authFetch";
 import { DisciplinaCard } from "./components/DisciplinaCard";
 import { DisciplinaExpand } from "./components/DisciplinaExpand";
-import { Spinner } from "../../components/ui/Spinner";
 import { toastApiError, toastSuccess } from "../../utils/toast";
 import { useLoading } from "../../contexts/LoadingContext";
 

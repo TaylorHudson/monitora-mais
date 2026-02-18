@@ -27,52 +27,44 @@ export function DisciplinaCard({
 }: Props) {
   return (
     <Card className="bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white w-full rounded-2xl shadow-lg p-7 flex flex-col border border-[#b2c9d6] transition-all hover:scale-[1.01]">
-      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-8 flex-1">
+      <div className="flex flex-col gap-3">
         
-        <div className="flex flex-col">
-          <div className="font-bold text-2xl text-primary drop-shadow-sm mb-1">
+          <div className="font-bold text-2xl text-primary drop-shadow-sm">
             {disciplina.nome}
           </div>
 
-          <div className="mt-2">
-            <span className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
-              {
-                disciplina.permiteMesmoHorario ? "Permite monitorias no mesmo horário" : "Não permite monitorias no mesmo horário"
-              }
-            </span>
-          </div>
+          <div className="flex flex-wrap gap-3 mt-2">
 
-          <div className="mt-2">
+            <span className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
+              {disciplina.permiteMesmoHorario
+                ? "Permite monitorias no mesmo horário"
+                : "Não permite monitorias no mesmo horário"}
+            </span>
+
             <span className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
               Requisições pendentes: {disciplina.requisicoesPendentes}
             </span>
-          </div>
 
-          <div className="mt-2">
             <span className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
               Tópicos: {
-                disciplina.topicos.length > 0 ? (
-                  disciplina.topicos.length > 3 ? (
-                    disciplina.topicos.slice(0, 3).join(", ") + ` +${disciplina.topicos.length - 3}`
-                  ) : (
-                    disciplina.topicos.join(", ")
-                  )
-                ) : (
-                  "Nenhum tópico disponível"
-                )
+                disciplina.topicos.length > 0
+                  ? disciplina.topicos.length > 3
+                    ? disciplina.topicos.slice(0, 3).join(", ") +
+                      ` +${disciplina.topicos.length - 3}`
+                    : disciplina.topicos.join(", ")
+                  : "Nenhum tópico disponível"
               }
             </span>
-          </div>
 
-          <div className="mt-2">
             <span className="inline-flex items-center bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
               Última requisição: {
-                disciplina.ultimaRequisicao ? formatarTempoRelativo(disciplina.ultimaRequisicao) : "Nenhuma requisição feita"
+                disciplina.ultimaRequisicao
+                  ? formatarTempoRelativo(disciplina.ultimaRequisicao)
+                  : "Nenhuma requisição feita"
               }
             </span>
+
           </div>
-        
-        </div>
 
       </div>
 
