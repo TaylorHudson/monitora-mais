@@ -4,14 +4,13 @@ import { LoginPage } from "./pages/login/LoginPage";
 import MinhasMonitoriasPage from "./pages/aluno/MinhasMonitoriasPage";
 import IniciarMonitoriaPage from "./pages/aluno/IniciarMonitoriaPage";
 import RequisicoesDeMonitoriaPage from "./pages/professor/RequisiçõesDeMonitoriaPage";
-import DisciplinasPage from "./pages/professor/DisciplinasPage";
 import EstatisticasDisciplinasPage from "./pages/professor/EstatisticasDisciplinasPage";
 import PdfMonthWorkloadsPage from "./pages/aluno/PdfMonthWorkloadsPage";
 import { PrivateRoute } from "./routes/PrivateRoute";
 import { Toaster } from "sonner";
 import { LoadingProvider } from "./contexts/LoadingContext";
 import MonitoresPage from "./pages/professor/MonitoresPage";
-import DisciplinasPage2 from "./pages/professor/DisciplinasPage2";
+import DisciplinasPage from "./pages/professor/DisciplinasPage";
 
 function App() {
   return (
@@ -24,7 +23,7 @@ function App() {
               <Route path="/minhas-monitorias" element={<MinhasMonitoriasPage />} />
               <Route path="/iniciar-monitoria" element={<IniciarMonitoriaPage />} />
               <Route path="/professor/requisicoes-monitoria" element={<RequisicoesDeMonitoriaPage />} />
-              <Route path="/professor/disciplinas" element={<DisciplinasPage2 />} />
+              <Route path="/professor/disciplinas" element={<DisciplinasPage />} />
               <Route path="/professor/monitores" element={<MonitoresPage />} />
               <Route path="/professor/estatisticas-disciplinas" element={<EstatisticasDisciplinasPage />} />
               <Route path="/aluno/pdf-carga-horaria" element={<PdfMonthWorkloadsPage />} />

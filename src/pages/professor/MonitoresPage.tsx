@@ -132,7 +132,7 @@ export default function MonitoresPage() {
         <SidebarProvider>
           <SidebarTrigger className="md:hidden fixed top-4 left-4 z-50" />
           <AppSidebarProfessor />
-          <main className="flex-1 p-4 md:p-8 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white min-h-screen">
+          <main className="flex-1 p-4 md:p-8 min-h-screen">
             <div className="mb-8 text-left w-full">
               <h1 className="text-3xl font-semibold mb-1 text-primary drop-shadow-sm">Monitores</h1>
               <p className="text-gray-700 text-base text-left">Gerencie os monitores de suas disciplinas</p>
@@ -207,22 +207,27 @@ export default function MonitoresPage() {
 
                                 <TableCell className="text-center">
                                     <div className="flex items-center justify-center gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => abrirDetalhes(monitor, monitoria)}
-                                        >
-                                            <Eye className="h-5 w-5" />
-                                        </Button>
+                                        <span title="Ver horários de monitoria">
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                className="hover:bg-primary/8 transition"
+                                                onClick={() => abrirDetalhes(monitor, monitoria)}
+                                            >
+                                                <Eye className="h-5 w-5" />
+                                            </Button>
+                                        </span>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="text-red-600 hover:text-red-700 hover:bg-red-100"
-                                            >
-                                                <UserMinus2 className="h-8 w-8" />
-                                            </Button>
+                                                <span title="Cancelar inscrição do monitor">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        className="hover:text-red-700 hover:bg-red-100"
+                                                    >
+                                                        <UserMinus2 className="h-8 w-8" />
+                                                    </Button>
+                                                </span>
                                             </AlertDialogTrigger>
 
                                             <AlertDialogContent>

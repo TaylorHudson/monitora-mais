@@ -4,6 +4,14 @@ export type Monitor = {
   daysOfWeek: string[];
 };
 
+export type Disciplina = {
+  id: number;
+  nome: string;
+  permiteMesmoHorario: boolean;
+  topicos: string[];
+  ultimaRequisicao?: string | null; 
+};
+
 export type Horario = {
   hour: number;
   minute: number;
