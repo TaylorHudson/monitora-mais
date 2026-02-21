@@ -23,11 +23,10 @@ export function MateriaCard({ nome, professor }: Props) {
 
   return (
     <Card
-      className={`w-full mb-8 transition-all duration-300 rounded-xl shadow-md border border-[#b2c9d6] p-0 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white}`}
+      className={`rounded-2xl shadow-lg border border-[#b2c9d6] hover:scale-[1.01] transition-all`}
     >
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-primary drop-shadow-sm">{nome}</CardTitle>
-        <CardDescription className="text-gray-700">Professor: {professor}</CardDescription>
+      <CardHeader className="pb-1">
+        <CardTitle className="text-2xl font-bold text-primary">{nome}</CardTitle>
       </CardHeader>
       <CardFooter className="flex flex-col items-start gap-2 pt-0 pb-4 px-6">
         <Button

@@ -158,7 +158,7 @@ export default function IniciarMonitoriaPage() {
 
   return (
     <>
-      <div className="flex h-full w-full bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white">
+      <div className="flex h-full w-full bg-[#F1F7FA]">
         <SidebarProvider>
           <AppSidebarAluno />
           <SidebarTrigger className="md:hidden fixed top-4 left-4 z-50" />
@@ -177,7 +177,7 @@ export default function IniciarMonitoriaPage() {
               <div className="h-1 w-24 bg-primary/20 rounded mt-4 ml-12" />
             </div>
            
-            <div className="flex flex-col gap-6 bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white rounded-xl shadow-md border border-[#b2c9d6] w-full p-8 items-start">
+            <div className="flex flex-col gap-6 bg-white rounded-2xl shadow-lg border border-[#b2c9d6] w-full p-8 items-start">
               <Badge variant={monitoriaAtiva ? "secondary" : "secondary"} className="mb-2">
                 {monitoriaAtiva ? "Monitoria em andamento" : "Monitoria não iniciada"}
               </Badge>

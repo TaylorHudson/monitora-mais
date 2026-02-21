@@ -158,7 +158,7 @@ export default function MonitoresPage() {
                         Nome do monitor
                     </TableHead>
                     <TableHead className="text-primary font-semibold">
-                        Matrícula
+                        Matrícula do monitor
                     </TableHead>
                     <TableHead className="text-primary font-semibold">
                         Dias de monitoria

@@ -93,6 +93,7 @@ export async function fetchComToken(
             ERROR_102: "O estudante já está inscrito na monitoria",
             ERROR_103: "A matrícula do estudante é inválida ou não foi encontrada no Suap",
             ERROR_104: "O nome do enum informado é inválido",
+            ERROR_105: "A disciplina já existe",
             ERROR_200: "Ponto não encontrado",
             ERROR_201: "Usuário não encontrado",
             ERROR_202: "Agendamento de monitoria não encontrado",

@@ -28,12 +28,7 @@ const items = [
     title: "Iniciar Monitoria",
     url: "/iniciar-monitoria",
     icon: BookOpenCheck,
-  },
-  {
-    title: "PDF Carga Horária",
-    url: "/aluno/pdf-carga-horaria",
-    icon: Download,
-  },
+  }
 ]
 
 export function AppSidebarAluno() {

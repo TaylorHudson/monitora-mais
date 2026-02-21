@@ -11,7 +11,7 @@ import {
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { fetchComToken } from "../../../services/authFetch";
-import { toastApiError, toastError } from "../../../utils/toast";
+import { toastApiError } from "../../../utils/toast";
 import { useNavigate } from "react-router-dom";
 import type { Disciplina } from "../../../services/types/types";
 
@@ -67,9 +67,6 @@ export default function CriarDisciplinaModal({
     },
   });
 
-  const { watch, setValue } = form;
-  const topicos = watch("topicos");
-
   useEffect(() => {
     if (modalAberto && disciplina) {
       form.reset({
@@ -97,21 +94,14 @@ export default function CriarDisciplinaModal({
             allowMonitorsSameTime: data.permiteMesmoHorario,
             topics: data.topicos,
           }),
-        }
+        },
       );
 
-      setModalAberto(false);
       navigate(0);
-    } catch (err: any) {
-      if (
-        err.message &&
-        (err.message.includes("duplicate key value") ||
-          err.message.includes("violates unique constraint"))
-      ) {
-        toastError("Nome inválido", "Já existe uma disciplina com esse nome");
-      } else {
-        toastApiError(err);
-      }
+    } catch (err: Error | any) {
+      toastApiError(err);
+    } finally {
+      setModalAberto(false);
     }
   }
 
