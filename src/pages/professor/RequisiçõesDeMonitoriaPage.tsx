@@ -76,7 +76,7 @@ return (
           <div className="flex gap-4 mt-6 flex-wrap">
             <Badge
               variant={statusFiltro === null ? "default" : "outline"}
-              className="cursor-pointer px-4 py-2 text-base"
+              className="cursor-pointer px-4 py-2 text-base "
               onClick={() => setStatusFiltro(null)}
             >
               Todos
@@ -112,14 +112,13 @@ return (
           {requisicao.map((item) => {
             const aluno = (item as any).monitor || "-";
             const dia = converterDiaParaPortugues(item.dayOfWeek);
-            const horario = `${formatarHora(item.startTime)} - ${formatarHora(
-              item.endTime
-            )}`;
+            const horario = `${formatarHora(item.startTime)} - ${formatarHora(item.endTime)}`;
+            const dataSolicitacao = new Date(item.requestedAt);
 
             return (
               <Card
                 key={item.id}
-                className="bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white rounded-2xl shadow-lg p-7 border border-[#b2c9d6] hover:scale-[1.01] transition-all"
+                className="rounded-2xl shadow-lg p-7 border border-[#b2c9d6] hover:scale-[1.01] transition-all"
               >
                 <div className="flex flex-col md:flex-row md:items-center gap-4">
                   <div className="flex-1">
@@ -128,37 +127,37 @@ return (
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                      <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
-                        Aluno: {aluno}
-                      </span>
+                        <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
+                          Aluno: {aluno}
+                        </span>
 
-                      <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
-                        Dia: {dia}
-                      </span>
+                        <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
+                          Dia: {dia}
+                        </span>
 
-                      <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
-                        Horário: {horario}
-                      </span>
+                        <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
+                          Horário: {horario}
+                        </span>
 
-                      <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
-                        Data de Solicitação: {item.requestedAt.toLocaleDateString("pt-BR")}
-                      </span>
+                        <span className="inline-flex bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
+                          Data de Solicitação: {dataSolicitacao.toLocaleDateString("pt-BR")}
+                        </span>
 
                       {/* Badge de status (apenas na aba TODOS) */}
                       {statusFiltro === null && (
                         <>
                           {item.status === "PENDING" && (
-                            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold border border-yellow-300">
+                            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
                               Pendente
                             </span>
                           )}
                           {item.status === "APPROVED" && (
-                            <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold border border-green-300">
+                            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
                               Aprovado
                             </span>
                           )}
                           {item.status === "DENIED" && (
-                            <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-semibold border border-red-300">
+                            <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-semibold border border-primary/20">
                               Negado
                             </span>
                           )}

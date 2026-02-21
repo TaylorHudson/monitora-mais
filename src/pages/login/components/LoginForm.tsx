@@ -18,7 +18,7 @@ import { toastApiError } from "../../../utils/toast";
 
 
 const formSchemaLogin = z.object({
-  matricula: z.string().min(1, "Campo Obrigatório").max(12, "Máximo 12 caracteres"),
+  matricula: z.string().min(1, "Campo Obrigatório").max(12, "Máximo de 12 caracteres"),
   password: z.string().min(1, "Campo obrigatório"),
 })
 

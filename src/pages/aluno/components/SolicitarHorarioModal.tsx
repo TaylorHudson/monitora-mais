@@ -1,10 +1,4 @@
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../../../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../components/ui/dialog";
 import { Button } from "../../../components/ui/button";
 import {
   Select,
@@ -13,9 +7,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../components/ui/select";
-import { toastApiError, toastError, toastSuccess } from "../../../utils/toast";
+
+import { Label } from "../../../components/ui/label";
+import { Form, FormField, FormItem, FormControl, FormMessage } from "../../../components/ui/form";
+import { toastApiError, toastSuccess } from "../../../utils/toast";
 import { fetchComToken } from "../../../services/authFetch";
 import { converterDiaParaIngles } from "../../../utils/utils";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+export const solicitarHorarioSchema = z
+  .object({
+    dia: z.string().min(1, "O dia da semana é obrigatório"),
+    horaInicio: z.string().min(1, "A hora inicial é obrigatória"),
+    horaFim: z.string().min(1, "A hora final é obrigatória"),
+  })
+  .refine(
+    (data) => data.horaFim > data.horaInicio,
+    {
+      message: "A hora final deve ser maior que a inicial",
+      path: ["horaFim"],
+    }
+  )
+  .refine(
+    (data) => {
+      const [h1, m1] = data.horaInicio.split(":").map(Number);
+      const [h2, m2] = data.horaFim.split(":").map(Number);
+      return h2 * 60 + m2 - (h1 * 60 + m1) >= 30;
+    },
+    {
+      message: "O intervalo mínimo deve ser de 30 minutos",
+      path: ["horaFim"],
+    }
+  );
+
+export type SolicitarHorarioForm = z.infer<typeof solicitarHorarioSchema>;
 
 type SolicitarHorarioModalProps = {
   open: boolean;
@@ -28,79 +56,40 @@ export function SolicitarHorarioModal({
   onOpenChange,
   monitoria,
 }: SolicitarHorarioModalProps) {
-  const [diaSelecionado, setDiaSelecionado] = useState("");
-  const [horaInicio, setHoraInicio] = useState("");
-  const [horaFim, setHoraFim] = useState("");
-  const [erroHora, setErroHora] = useState<string | null>(null);
+  const form = useForm<SolicitarHorarioForm>({
+    resolver: zodResolver(solicitarHorarioSchema),
+    defaultValues: {
+      dia: "",
+      horaInicio: "",
+      horaFim: "",
+    },
+  });
 
-  async function solicitarHorario(
-      diaSelecionado: string,
-      horaInicio: string,
-      horaFim: string
-  ) {
-      if (horaFim <= horaInicio) {
-        toastError("Erro de validação", "A hora final deve ser maior que a inicial");
-        return;
-      }
+  async function onSubmit(data: SolicitarHorarioForm) {
+    try {
+      await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/schedules/students`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            monitoring: monitoria,
+            dayOfWeek: converterDiaParaIngles(data.dia),
+            startTime: data.horaInicio + ":00",
+            endTime: data.horaFim + ":00",
+          }),
+        }
+      );
 
-      if (!diaSelecionado || !horaInicio || !horaFim) {
-        toastError("Erro de validação", "Preencha todos os campos antes de enviar");
-        return;
-      }
-  
-      if (!/^\d{2}:\d{2}$/.test(horaInicio) || !/^\d{2}:\d{2}$/.test(horaFim)) {
-        toastError("Erro de validação", "Horário inválido. Use o formato HH:mm");
-        return;
-      }
-  
-      if (horaFim <= horaInicio) {
-        toastError("Erro de validação", "A hora final deve ser posterior à hora inicial");
-        return;
-      }
-  
-      const [h1, m1] = horaInicio.split(":").map(Number);
-      const [h2, m2] = horaFim.split(":").map(Number);
-      if (h2 * 60 + m2 - (h1 * 60 + m1) < 30) {
-        toastError("Erro de validação", "O intervalo entre o início e o fim deve ser de pelo menos 30 minutos");
-        return;
-      }
-      
-      try {
-        await fetchComToken(
-          `${import.meta.env.VITE_API_URL}/monitoring/schedules/students`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(
-              {
-                monitoring: monitoria,
-                dayOfWeek: converterDiaParaIngles(diaSelecionado),
-                startTime: horaInicio + ":00",
-                endTime: horaFim + ":00",
-              }
-            ),
-          }
-        );
-        onOpenChange(false);
-        toastSuccess("Solicitação enviada", "Seu horário de monitoria foi solicitado. Aguarde a aprovação do professor");
-      } catch (err: any) {
-        toastApiError(err);
-      }
-  }
+      toastSuccess(
+        "Solicitação enviada",
+        "Seu horário de monitoria foi solicitado. Aguarde a aprovação do professor"
+      );
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    solicitarHorario(diaSelecionado, horaInicio, horaFim);
-  }
-
-  function handleOpenChange(open: boolean) {
-    onOpenChange(open);
-
-    if (!open) {
-      setDiaSelecionado("");
-      setHoraInicio("");
-      setHoraFim("");
-      setErroHora(null);
+      onOpenChange(false);
+      form.reset();
+    } catch (err) {
+      toastApiError(err);
     }
   }
 
@@ -113,7 +102,13 @@ export function SolicitarHorarioModal({
   ];
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        onOpenChange(v);
+        if (!v) form.reset();
+      }}
+    >
       <DialogContent className="max-w-lg bg-gradient-to-br from-[#bddae2] via-[#e6f4ec] to-white border border-[#b2c9d6] p-6">
         <DialogHeader>
           <DialogTitle className="text-2xl text-primary">
@@ -121,62 +116,81 @@ export function SolicitarHorarioModal({
           </DialogTitle>
         </DialogHeader>
 
-        <form className="flex flex-col gap-4 mt-4" onSubmit={handleSubmit}>
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-primary">
-              Dia da semana
-            </label>
-            <Select value={diaSelecionado} onValueChange={setDiaSelecionado}>
-              <SelectTrigger className="w-full bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary">
-                <SelectValue placeholder="Selecione o dia" />
-              </SelectTrigger>
-              <SelectContent>
-                {diasDaSemana.map((dia) => (
-                  <SelectItem key={dia} value={dia}>
-                    {dia}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-4 mt-4">
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-primary">
-              Hora inicial
-            </label>
-            <input
-              type="time"
-              className="w-full bg-white/80 border border-[#b2c9d6] rounded px-3 py-2 focus:border-primary focus:ring-primary"
-              value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
+            {/* Dia */}
+            <FormField
+              control={form.control}
+              name="dia"
+              render={({ field }) => (
+                <FormItem>
+                  <Label className="text-primary">Dia da semana</Label>
+                  <FormControl>
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary">
+                        <SelectValue placeholder="Selecione o dia da semana" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {diasDaSemana.map((dia) => (
+                          <SelectItem key={dia} value={dia}>
+                            {dia}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-primary">
-              Hora final
-            </label>
-            <input
-              type="time"
-              className="w-full bg-white/80 border border-[#b2c9d6] rounded px-3 py-2 focus:border-primary focus:ring-primary"
-              value={horaFim}
-              onChange={(e) => setHoraFim(e.target.value)}
+            {/* Hora inicial */}
+            <FormField
+              control={form.control}
+              name="horaInicio"
+              render={({ field }) => (
+                <FormItem>
+                  <Label className="text-primary">Hora inicial</Label>
+                  <FormControl>
+                    <input
+                      type="time"
+                      {...field}
+                      className="w-full bg-white/80 border border-[#b2c9d6] rounded px-3 py-2 focus:border-primary focus:ring-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          {erroHora && (
-            <div className="text-sm text-red-600">{erroHora}</div>
-          )}
+            {/* Hora final */}
+            <FormField
+              control={form.control}
+              name="horaFim"
+              render={({ field }) => (
+                <FormItem>
+                  <Label className="text-primary">Hora final</Label>
+                  <FormControl>
+                    <input
+                      type="time"
+                      {...field}
+                      className="w-full bg-white/80 border border-[#b2c9d6] rounded px-3 py-2 focus:border-primary focus:ring-primary"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <div className="flex justify-end">
             <Button
               type="submit"
               className="h-12 w-full text-lg bg-primary text-white hover:bg-green-700"
             >
               Enviar solicitação
             </Button>
-          </div>
-        </form>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

@@ -20,7 +20,7 @@ const items = [
     icon: Calendar,
   },
   {
-    title: "Minhas Monitorias",
+    title: "Monitorias",
     url: "/minhas-monitorias",
     icon: BookOpen,
   },

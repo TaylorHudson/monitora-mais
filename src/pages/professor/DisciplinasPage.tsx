@@ -77,13 +77,9 @@ export default function DisciplinasPage() {
     carregarDisciplinas();
   }, []);
 
-  type NovoMonitor = {
-    matricula: string;
-  };
-
-  async function handleAddMonitor(monitor: NovoMonitor) {
+  async function handleAddMonitor(matricula: string) {
     try {
-      if (!monitor.matricula.trim()) return;
+      if (!matricula.trim()) return;
 
       const disciplina = disciplinas.find(d => d.id === disciplinaId);
       if (!disciplina) {
@@ -96,10 +92,11 @@ export default function DisciplinasPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          studentRegistration: monitor.matricula,
+          studentRegistration: matricula,
           monitoringName: disciplina.nome,
         }),
-      });
+      },
+    setLoading);
 
       toastSuccess(
         "Monitor adicionado",
@@ -115,7 +112,7 @@ export default function DisciplinasPage() {
         <AdicionarMonitorModal
           open={openModal}
           onClose={() => setOpenModal(false)}
-          onConfirm={(data) => handleAddMonitor(data)}
+          onConfirm={(matricula) => handleAddMonitor(matricula)}
         />
 
         <div className="flex h-full w-full bg-[#F1F7FA]">

@@ -79,10 +79,7 @@ export default function EstatisticasDisciplinasPage() {
                   shadow-lg
                   border
                   border-[#b2c9d6]
-                  bg-gradient-to-br
-                  from-[#bddae2]
-                  via-[#e6f4ec]
-                  to-white
+                  
                   flex
                   flex-col
                   gap-6
