@@ -68,34 +68,52 @@ export default function CriarDisciplinaModal({
   });
 
   useEffect(() => {
-    if (modalAberto && disciplina) {
+    if (!modalAberto) return;
+
+    if (disciplina) {
       form.reset({
         nome: disciplina.nome,
         permiteMesmoHorario: disciplina.permiteMesmoHorario,
         topicos: disciplina.topicos ?? [],
       });
+    } else {
+      form.reset({
+        nome: "",
+        permiteMesmoHorario: false,
+        topicos: [],
+      });
     }
-
-    if (!modalAberto) {
-      form.reset();
-      setTopicoInput("");
-    }
-  }, [modalAberto, disciplina, form]);
+  }, [modalAberto, disciplina]);
 
   async function onSubmit(data: DisciplinaFormData) {
     try {
-      await fetchComToken(
-        `${import.meta.env.VITE_API_URL}/monitoring/teachers`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: data.nome,
-            allowMonitorsSameTime: data.permiteMesmoHorario,
-            topics: data.topicos,
-          }),
-        },
-      );
+      if (disciplina) {
+        await fetchComToken(
+          `${import.meta.env.VITE_API_URL}/monitoring/teachers/${disciplina.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: data.nome,
+              allowMonitorsSameTime: data.permiteMesmoHorario,
+              topics: data.topicos,
+            }),
+          },
+        );      
+      } else {
+        await fetchComToken(
+          `${import.meta.env.VITE_API_URL}/monitoring/teachers`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: data.nome,
+              allowMonitorsSameTime: data.permiteMesmoHorario,
+              topics: data.topicos,
+            }),
+          },
+        );
+      }
 
       navigate(0);
     } catch (err: Error | any) {
@@ -154,11 +172,15 @@ export default function CriarDisciplinaModal({
                 <FormItem className="flex items-center gap-4">
                   <FormControl>
                     <Checkbox
+                      className="cursor-pointer"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <Label className="cursor-pointer text-base text-primary">
+                  <Label 
+                    className="cursor-pointer text-base text-primary"
+                    onClick={() => field.onChange(!field.value)}
+                  >
                     Permitir monitores no mesmo horário
                   </Label>
                 </FormItem>

@@ -27,12 +27,12 @@ export default function DisciplinasPage() {
   const filtro = searchParams.get("filtro") ?? "";
 
   function filtroMudou(value: string) {
-            if (value) {
-            setSearchParams({ filtro: value })
-            } else {
-            setSearchParams({})
-            }
-        }
+      if (value) {
+      setSearchParams({ filtro: value })
+      } else {
+      setSearchParams({})
+      }
+  }
 
   async function carregarDisciplinas() {
     try {
@@ -300,7 +300,12 @@ export default function DisciplinasPage() {
       <CriarDisciplinaModal
         disciplina={disciplina}
         modalAberto={modalAberto}
-        setModalAberto={setModalAberto}
+        setModalAberto={(open) => {
+          setModalAberto(open);
+          if (!open) {
+            setDisciplina(null);
+          }
+        }}
       />
     </>
   );

@@ -3,7 +3,7 @@ import { AppSidebarProfessor } from "../../components/ui/app-sidebarprofessor";
 import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { fetchComToken } from "../../services/authFetch";
 import type { Agendamento, Monitor, MonitoriaDetails } from "../../services/types/types";
-import { toastApiError } from "../../utils/toast";
+import { toastApiError, toastSuccess } from "../../utils/toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../../components/ui/alert-dialog";
@@ -18,17 +18,18 @@ export default function MonitoresPage() {
     const [verDetalhesAberto, setVerDetalhesAberto] = useState(false);
     const [monitorias, setMonitorias] = useState<MonitoriaDetails[]>([]);
     const [agendamentosAprovados, setAgendamentosAprovados] = useState<Agendamento[]>([]);
+    const [recarregar, setRecarregar] = useState(0);
     const { setLoading } = useLoading();
     const [searchParams, setSearchParams] = useSearchParams()
     const filtro = searchParams.get("filtro") ?? ""
 
-      function filtroMudou(value: string) {
-            if (value) {
-            setSearchParams({ filtro: value })
-            } else {
-            setSearchParams({})
-            }
+    function filtroMudou(value: string) {
+        if (value) {
+        setSearchParams({ filtro: value })
+        } else {
+        setSearchParams({})
         }
+    }
 
     async function carregarAgendamentosAprovados(monitor: Monitor, monitoria: MonitoriaDetails) {
         try {
@@ -62,7 +63,24 @@ export default function MonitoresPage() {
         setVerDetalhesAberto(true);
     }
 
-  async function carregarDetalhesDeMonitoria() {
+    async function cancelarInscricao(id: number, registration: string) {
+        try {
+            await fetchComToken(
+                `${import.meta.env.VITE_API_URL}/monitoring/${id}/students/${registration}`,
+                {
+                    method: "DELETE"
+                },
+                setLoading
+            );
+            
+            toastSuccess("Inscrição cancelada com sucesso");
+            setRecarregar(prev => prev + 1);
+        } catch (err: Error | any) {
+            toastApiError(err);
+        }
+    }
+
+    async function carregarDetalhesDeMonitoria() {
       try {
         const res = await fetchComToken(
           `${import.meta.env.VITE_API_URL}/monitoring/teachers/details`,
@@ -78,7 +96,7 @@ export default function MonitoresPage() {
   
     useEffect(() => {
       carregarDetalhesDeMonitoria();
-    }, []);
+    }, [recarregar]);
 
   return (
     <>
@@ -248,7 +266,7 @@ export default function MonitoresPage() {
                                                 </AlertDialogCancel>
 
                                                 <AlertDialogAction variant="destructive" size="default"
-                                                onClick={() => console.log(monitor)}
+                                                onClick={() => cancelarInscricao(monitoria.id, monitor.registration)}
                                                 >
                                                 Sim, cancelar inscrição
                                                 </AlertDialogAction>
