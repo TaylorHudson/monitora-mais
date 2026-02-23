@@ -1,40 +1,26 @@
-import { toast } from "sonner";
+import { toast } from 'sonner';
 
-export function toastSuccess(
-  title: string,
-  description?: string
-) {
+export function toastSuccess(title: string, description?: string) {
   toast.success(title, {
     description,
   });
 }
 
-export function toastError(
-  title: string,
-  description?: string
-) {
+export function toastError(title: string, description?: string) {
   toast.error(title, {
     description,
   });
 }
 
 export function toastApiError(
-  error: Error | any,
-  fallbackMessage = "Erro inesperado"
+  error: Error | unknown,
+  fallbackMessage = 'Erro inesperado',
 ) {
-  if (
-    error instanceof Error &&
-    error.message === "Sessão expirada"
-  ) {
+  if (error instanceof Error && error.message === 'Sessão expirada') {
     return;
   }
 
-  const message =
-    error instanceof Error
-      ? error.message
-      : fallbackMessage;
+  const message = error instanceof Error ? error.message : fallbackMessage;
 
-  toast.error("Erro", {
-    description: message,
-  });
+  toast.error(message, {});
 }
