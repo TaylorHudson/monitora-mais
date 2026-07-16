@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppSidebarAluno } from "../../components/app-sidebaraluno";
 import { SidebarProvider, SidebarTrigger } from "../../components/ui/sidebar";
 import { MonitoriaCard } from "./components/MonitoriaCard";
 import { Calendar } from "lucide-react";
-import { fetchComToken } from "../../utils/fetchComToken";
+import { fetchComToken } from "../../services/authFetch";
+import { useLoading } from "../../contexts/LoadingContext";
+import { toastApiError } from "../../utils/toast";
 
-// Tipagem para os dados de monitoria
 type Monitoria = {
   id: number;
   monitor: string;
@@ -17,31 +18,25 @@ type Monitoria = {
 
 export default function MinhasMonitoriasPage() {
   const [monitorias, setMonitorias] = useState<Monitoria[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
+  const { setLoading } = useLoading();
+
+  async function carregarMonitorias() {
+    try {
+      const res = await fetchComToken(
+        `${import.meta.env.VITE_API_URL}/monitoring/schedules/students/me`,
+        {},
+        setLoading
+      );
+      const data = await res.json();
+      setMonitorias(data);
+    } catch (err: Error | any) {
+      toastApiError(err, "Erro ao buscar monitorias");
+    }
+  }
 
   useEffect(() => {
-    fetchComToken(`${import.meta.env.VITE_API_URL}/monitoring/schedules/students/me`)
-      .then(async (res) => {
-        if (!res.ok) {
-          const msg = await res.text();
-          setErro(msg || "Erro ao buscar monitorias");
-          console.error("Erro monitorias:", msg);
-          return [];
-        }
-        const data = await res.json();
-        console.log("Monitorias recebidas:", data);
-        return data;
-      })
-      .then(setMonitorias)
-      .catch((err) => {
-        setErro(err.message);
-        console.error("Erro monitorias:", err);
-      })
-      .finally(() => setLoading(false));
+    carregarMonitorias();
   }, []);
-
-  if (erro) return <div className="text-red-600 p-4">{erro}</div>;
 
   return (
     <div className="flex h-full w-full bg-[#F1F7FA]">
@@ -64,9 +59,7 @@ export default function MinhasMonitoriasPage() {
           </div>
           {/* Cards das monitorias */}
           <div className="flex flex-col w-full px-4 py-8 gap-4">
-            {loading ? (
-              <div className="text-blue-700 text-center">Carregando suas monitorias...</div>
-            ) : monitorias.length === 0 ? (
+            {monitorias.length === 0 ? (
               <div className="text-gray-500 text-center">Nenhuma monitoria encontrada.</div>
             ) : (
               monitorias.map((m) => (

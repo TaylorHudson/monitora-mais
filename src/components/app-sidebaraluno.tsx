@@ -1,4 +1,11 @@
-import { BookOpen, BookOpenCheck, Calendar, PanelLeftIcon, LogOut, Download } from "lucide-react"
+import {
+  BookOpen,
+  BookOpenCheck,
+  Calendar,
+  PanelLeftIcon,
+  LogOut,
+  Download,
+} from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -9,40 +16,40 @@ import {
   SidebarMenuItem,
   SidebarRail,
   useSidebar,
-} from "./ui/sidebar"
-import { Link, useLocation } from "react-router-dom"
+} from './ui/sidebar';
+import { Link, useLocation } from 'react-router-dom';
+import { clearAuthTokens } from '../services/authStorage';
 
 const items = [
   {
-    title: "Requisitar Horário",
-    url: "/requisitar-horario",
+    title: 'Requisitar Horário',
+    url: '/requisitar-horario',
     icon: Calendar,
   },
   {
-    title: "Minhas Monitorias",
-    url: "/minhas-monitorias",
+    title: 'Monitorias',
+    url: '/minhas-monitorias',
     icon: BookOpen,
   },
   {
-    title: "Iniciar Monitoria",
-    url: "/iniciar-monitoria",
+    title: 'Iniciar Monitoria',
+    url: '/iniciar-monitoria',
     icon: BookOpenCheck,
   },
   {
-    title: "PDF Carga Horária",
-    url: "/aluno/pdf-carga-horaria",
+    title: 'Carga Horária',
+    url: '/aluno/pdf-carga-horaria',
     icon: Download,
   },
-]
+];
 
 export function AppSidebarAluno() {
   const location = useLocation();
   const { state } = useSidebar(); // "expanded" ou "collapsed"
 
   function handleLogout() {
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    window.location.href = "/login";
+    clearAuthTokens();
+    window.location.href = '/login';
   }
 
   return (
@@ -53,14 +60,18 @@ export function AppSidebarAluno() {
           <PanelLeftIcon className="w-7 h-7 text-primary" />
         </SidebarRail>
         <div className="flex flex-col items-center py-8">
-          <span className={`font-bold text-primary text-lg tracking-wide transition-all duration-200 ${
-            state === "collapsed" ? "inline md:hidden" : ""
-          }`}>
+          <span
+            className={`font-bold text-primary text-lg tracking-wide transition-all duration-200 ${
+              state === 'collapsed' ? 'inline md:hidden' : ''
+            }`}
+          >
             MONITORA+
           </span>
-          <span className={`text-xs text-gray-400 mt-1 transition-all duration-200 ${
-            state === "collapsed" ? "inline md:hidden" : ""
-          }`}>
+          <span
+            className={`text-xs text-gray-400 mt-1 transition-all duration-200 ${
+              state === 'collapsed' ? 'inline md:hidden' : ''
+            }`}
+          >
             Aluno
           </span>
         </div>
@@ -69,14 +80,15 @@ export function AppSidebarAluno() {
             <SidebarMenu>
               {items.map((item) => {
                 const ativo = location.pathname === item.url;
-                let destaqueClasses = "";
-                if (ativo && state === "expanded") {
-                  destaqueClasses = "bg-primary/10 text-primary border-l-4 border-black shadow";
-                } else if (ativo && state === "collapsed") {
+                let destaqueClasses = '';
+                if (ativo && state === 'expanded') {
+                  destaqueClasses =
+                    'bg-primary/10 text-primary border-l-4 border-black shadow';
+                } else if (ativo && state === 'collapsed') {
                   // Destaque especial para mobile (collapsed)
                   destaqueClasses = ativo
-                    ? "bg-primary/10 text-primary border-l-4 border-primary shadow"
-                    : "bg-gray-200";
+                    ? 'bg-primary/10 text-primary border-l-4 border-primary shadow'
+                    : 'bg-gray-200';
                 }
                 return (
                   <SidebarMenuItem key={item.title} className="mb-6">
@@ -91,9 +103,7 @@ export function AppSidebarAluno() {
                         <item.icon className="w-8 h-8" />
                         <span
                           className={
-                            state === "collapsed"
-                              ? "inline md:hidden"
-                              : ""
+                            state === 'collapsed' ? 'inline md:hidden' : ''
                           }
                         >
                           {item.title}
@@ -101,17 +111,27 @@ export function AppSidebarAluno() {
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                )
+                );
               })}
-              {/* Logoff item */}
-              <SidebarMenuItem className="mb-6 mt-8">
+
+              <SidebarMenuItem className="">
                 <SidebarMenuButton
                   asChild
                   className="flex items-center gap-4 px-6 py-4 rounded-xl text-lg font-semibold transition-all duration-200 hover:bg-red-100 hover:text-red-700 hover:shadow"
                 >
-                  <button type="button" onClick={handleLogout} className="flex items-center gap-4 w-full text-left">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex items-center gap-4 w-full text-left"
+                  >
                     <LogOut className="w-8 h-8" />
-                    <span className={state === "collapsed" ? "inline md:hidden" : ""}>Sair</span>
+                    <span
+                      className={
+                        state === 'collapsed' ? 'inline md:hidden' : ''
+                      }
+                    >
+                      Sair
+                    </span>
                   </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -120,5 +140,5 @@ export function AppSidebarAluno() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
