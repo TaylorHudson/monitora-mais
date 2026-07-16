@@ -155,10 +155,11 @@ export default function CriarDisciplinaModal({
               name="nome"
               render={({ field }) => (
                 <FormItem>
-                  <Label className="text-primary">Nome da monitoria</Label>
+                  <Label className="text-primary">Nome</Label>
                   <FormControl>
                     <Input
                       {...field}
+                      placeholder="Nome da disciplina - 2026.1"
                       className="h-12 text-lg bg-white/80 border border-[#b2c9d6] focus:border-primary focus:ring-primary"
                     />
                   </FormControl>
